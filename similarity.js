@@ -89,8 +89,10 @@ async function detectTextSimilarities() {
   const csvRows = [];
   
   // Create header row
-  if (vectors.length === 0) {
+  if (!vectors || vectors.length === 0) {
     console.log('Warning: No embeddings to export\n');
+  } else if (!vectors[0] || !Array.isArray(vectors[0])) {
+    console.log('Warning: Invalid embedding data\n');
   } else {
     const embeddingDimensions = vectors[0].length;
     const headerColumns = ['filename', 'topic', 'subtopic'];
@@ -103,11 +105,15 @@ async function detectTextSimilarities() {
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
       const vector = vectors[i];
+      // Ensure vector values are numeric
+      const numericVector = Array.isArray(vector) 
+        ? vector.map(v => (typeof v === 'number' && !isNaN(v)) ? v : 0)
+        : [];
       const row = [
         escapeCSV(doc.filename),
         escapeCSV(doc.topic),
         escapeCSV(doc.subtopic),
-        ...vector
+        ...numericVector
       ];
       csvRows.push(row.join(','));
     }
