@@ -17,7 +17,9 @@ async function detectTextSimilarities() {
   console.log('Loading embedding model...');
   
   // Use a sentence embedding model for text similarity
-  const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  const extractor = await pipeline('feature-extraction', 'Xenova/bge-base-en-v1.5', {
+    dtype: 'q8'
+  });
   
   console.log('Model loaded successfully!\n');
   
