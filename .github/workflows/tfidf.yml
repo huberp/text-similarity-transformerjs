@@ -1,0 +1,50 @@
+name: TF-IDF Analysis
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'tfidf.js'
+      - '.github/workflows/tfidf.yml'
+      - 'test_corpus/**'
+      - 'package.json'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'tfidf.js'
+      - '.github/workflows/tfidf.yml'
+      - 'test_corpus/**'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  tfidf-analysis:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run TF-IDF analysis
+      run: npm run tfidf
+      
+    - name: Upload TF-IDF analysis outputs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: tfidf-outputs
+        path: |
+          tf.csv
+          idf.csv
+        retention-days: 90
