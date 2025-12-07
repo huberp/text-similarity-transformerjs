@@ -5,7 +5,8 @@
   "main": "similarity.js",
   "type": "module",
   "scripts": {
-    "similarity": "node similarity.js"
+    "similarity": "node similarity.js",
+    "lint": "eslint *.js"
   },
   "keywords": [
     "transformers",
@@ -17,5 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "@xenova/transformers": "^2.17.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1"
   }
 }

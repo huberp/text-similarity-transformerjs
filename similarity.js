@@ -41,9 +41,9 @@ async function detectTextSimilarities() {
     
     documents.push({
       filename: file,
-      content: content,
-      topic: topic,
-      subtopic: subtopic
+      content,
+      topic,
+      subtopic
     });
   }
   
@@ -89,7 +89,7 @@ async function detectTextSimilarities() {
       similarities.push({
         doc1: documents[i],
         doc2: documents[j],
-        similarity: similarity
+        similarity
       });
     }
   }
