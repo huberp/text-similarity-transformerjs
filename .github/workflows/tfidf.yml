@@ -46,5 +46,9 @@ jobs:
         name: tfidf-outputs
         path: |
           tf.csv
+          tf_sparse.csv
           idf.csv
+          document_index.csv
+          term_index.csv
+          term_documents.csv
         retention-days: 90

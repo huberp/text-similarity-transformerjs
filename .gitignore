@@ -30,4 +30,8 @@ vector-index/
 embeddings.csv
 similarity_results.csv
 tf.csv
+tf_sparse.csv
 idf.csv
+document_index.csv
+term_index.csv
+term_documents.csv
