@@ -1,9 +1,34 @@
 import { Corpus } from 'tiny-tfidf';
 import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import natural from 'natural';
 
 // Constants for CSV formatting
 const IDF_DECIMAL_PLACES = 6;
+
+// Function to preprocess text with stemming
+function stemText(text) {
+  // Use the same tokenization pattern as tiny-tfidf's Document class
+  const matches = text.match(/[a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/g);
+  if (!matches) return text;
+  
+  const stemmedWords = matches
+    .map(word => word.toLowerCase())
+    .filter(word => {
+      // Apply same filtering as tiny-tfidf Document class
+      if (word.length < 2 && !['i', 'a'].includes(word)) {
+        return false;
+      }
+      if (word.match(/^\d+$/)) {
+        return false;
+      }
+      return true;
+    })
+    .map(word => natural.PorterStemmer.stem(word));
+  
+  // Join stemmed words back into a string
+  return stemmedWords.join(' ');
+}
 
 function computeTFIDF() {
   // Helper function to escape CSV fields
@@ -53,10 +78,12 @@ function computeTFIDF() {
     });
     
     documentNames.push(file);
-    documentTexts.push(content);
+    // Apply stemming to document text before adding to corpus
+    documentTexts.push(stemText(content));
   }
   
   console.log('Computing TF-IDF scores for all documents...');
+  console.log('Note: Using Porter Stemmer for term normalization\n');
   
   // Create corpus using tiny-tfidf with BM25 weighting scheme
   // K1: Controls term frequency saturation (higher = more influence from term frequency)
