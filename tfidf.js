@@ -2,7 +2,10 @@ import { Corpus } from 'tiny-tfidf';
 import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-async function computeTFIDF() {
+// Constants for CSV formatting
+const IDF_DECIMAL_PLACES = 6;
+
+function computeTFIDF() {
   // Helper function to escape CSV fields
   const escapeCSV = (field) => {
     if (field == null) return '';
@@ -55,7 +58,9 @@ async function computeTFIDF() {
   
   console.log('Computing TF-IDF scores for all documents...');
   
-  // Create corpus using tiny-tfidf
+  // Create corpus using tiny-tfidf with BM25 weighting scheme
+  // K1: Controls term frequency saturation (higher = more influence from term frequency)
+  // b: Controls document length normalization (0-1; 1 = penalize long docs, 0 = ignore length)
   const corpus = new Corpus(documentNames, documentTexts, {
     useDefaultStopwords: true,
     customStopwords: [],
@@ -113,7 +118,7 @@ async function computeTFIDF() {
     const idfWeight = corpus.getCollectionFrequencyWeight(term);
     const collectionFreq = corpus.getCollectionFrequency(term);
     
-    const row = [term, idfWeight.toFixed(6), collectionFreq];
+    const row = [term, idfWeight.toFixed(IDF_DECIMAL_PLACES), collectionFreq];
     idfRows.push(row.map(escapeCSV).join(','));
   }
   
@@ -150,4 +155,8 @@ async function computeTFIDF() {
 }
 
 // Run the analysis
-computeTFIDF().catch(console.error);
+try {
+  computeTFIDF();
+} catch (error) {
+  console.error(error);
+}
