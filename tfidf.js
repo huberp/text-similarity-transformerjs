@@ -173,15 +173,16 @@ function computeTFIDF() {
   const termDocsRows = [];
   termDocsRows.push(['term_id', 'term', 'document_ids'].map(escapeCSV).join(','));
   
+  // Pre-load all document objects for performance
+  const documentObjects = documents.map((_, i) => corpus.getDocument(documentNames[i]));
+  
   // Build inverted index: for each term, find all documents containing it
   for (let termId = 0; termId < idfData.length; termId++) {
     const { term } = idfData[termId];
     const docIds = [];
     
     for (let docId = 0; docId < documents.length; docId++) {
-      const docName = documentNames[docId];
-      const docObj = corpus.getDocument(docName);
-      const tf = docObj.getTermFrequency(term);
+      const tf = documentObjects[docId].getTermFrequency(term);
       
       if (tf > 0) {
         docIds.push(docId);
@@ -209,14 +210,15 @@ function computeTFIDF() {
   }
   
   for (let docId = 0; docId < documents.length; docId++) {
-    const docName = documentNames[docId];
-    const docObj = corpus.getDocument(docName);
+    const docObj = documentObjects[docId];
     
-    // Get all terms in this document
-    for (const term of allTerms) {
-      const tf = docObj.getTermFrequency(term);
-      if (tf > 0) {
-        const termId = termToId.get(term);
+    // Get only the unique terms that actually appear in this document
+    const uniqueTerms = docObj.getUniqueTerms();
+    for (const term of uniqueTerms) {
+      const termId = termToId.get(term);
+      // Skip terms not in our filtered vocabulary (stopwords, etc.)
+      if (termId !== undefined) {
+        const tf = docObj.getTermFrequency(term);
         const row = [docId, termId, tf];
         tfSparseRows.push(row.map(escapeCSV).join(','));
       }
