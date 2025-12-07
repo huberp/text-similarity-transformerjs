@@ -52,6 +52,26 @@ The script will:
 3. Generate embeddings for each document
 4. Calculate similarity scores between all document pairs
 5. Display analysis results including top similar pairs and topic-based statistics
+6. Export two CSV files:
+   - **embeddings.csv**: Contains filename, topic, subtopic, and all embedding dimensions for each document
+   - **similarity_results.csv**: Contains detailed similarity scores between all document pairs
+
+### Output Files
+
+The script generates two CSV files that can be used for further analysis:
+
+**embeddings.csv**
+- Contains one row per document with columns: `filename`, `topic`, `subtopic`, `dim_0`, `dim_1`, ..., `dim_N`
+- The embedding dimensions can be loaded into Jupyter/Pandas for analysis and visualization
+- Example: 25 documents with 384-dimensional embeddings
+
+**similarity_results.csv**
+- Contains similarity scores between all document pairs
+- Columns: `document1_filename`, `document1_topic`, `document1_subtopic`, `document2_filename`, `document2_topic`, `document2_subtopic`, `similarity_score`, `same_topic`
+- Sorted by similarity score (highest to lowest)
+- Can be used for detailed similarity analysis and filtering
+
+See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed examples and usage patterns for these CSV files.
 
 ## GitHub Workflow
 
