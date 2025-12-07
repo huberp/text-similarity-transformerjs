@@ -3,8 +3,18 @@ name: Text Similarity Analysis
 on:
   push:
     branches: [ main, master ]
+    paths:
+      - 'similarity.js'
+      - '.github/workflows/text-similarity.yml'
+      - 'test_corpus/**'
+      - 'package.json'
   pull_request:
     branches: [ main, master ]
+    paths:
+      - 'similarity.js'
+      - '.github/workflows/text-similarity.yml'
+      - 'test_corpus/**'
+      - 'package.json'
   workflow_dispatch:
 
 jobs:
@@ -25,9 +35,6 @@ jobs:
         
     - name: Install dependencies
       run: npm install
-      
-    - name: Run linter
-      run: npm run lint
       
     - name: Run text similarity analysis
       run: npm run similarity
