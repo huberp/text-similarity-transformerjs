@@ -104,7 +104,7 @@ async function detectTextSimilarities() {
     const sim = similarities[i];
     const sameTopic = sim.doc1.topic === sim.doc2.topic ? '✓' : '✗';
     console.log(`${(sim.similarity * 100).toFixed(2)}% ${sameTopic} | ${sim.doc1.filename} (${sim.doc1.topic}/${sim.doc1.subtopic})`);
-    console.log(`      ${' '.repeat(5)}   ${sim.doc2.filename} (${sim.doc2.topic}/${sim.doc2.subtopic})`);
+    console.log(`           ${sim.doc2.filename} (${sim.doc2.topic}/${sim.doc2.subtopic})`);
   }
   console.log();
   
