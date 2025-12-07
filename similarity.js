@@ -4,6 +4,16 @@ import { join } from 'path';
 import { LocalIndex } from 'vectra';
 
 async function detectTextSimilarities() {
+  // Helper function to escape CSV fields
+  const escapeCSV = (field) => {
+    if (field == null) return '';
+    const str = String(field);
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+  
   console.log('Loading embedding model...');
   
   // Use a sentence embedding model for text similarity
@@ -75,33 +85,38 @@ async function detectTextSimilarities() {
   
   // Export embeddings to CSV
   console.log('Exporting embeddings to CSV...');
+  
   const csvRows = [];
   
   // Create header row
-  const embeddingDimensions = vectors[0].length;
-  const headerColumns = ['filename', 'topic', 'subtopic'];
-  for (let i = 0; i < embeddingDimensions; i++) {
-    headerColumns.push(`dim_${i}`);
+  if (vectors.length === 0) {
+    console.log('Warning: No embeddings to export\n');
+  } else {
+    const embeddingDimensions = vectors[0].length;
+    const headerColumns = ['filename', 'topic', 'subtopic'];
+    for (let i = 0; i < embeddingDimensions; i++) {
+      headerColumns.push(`dim_${i}`);
+    }
+    csvRows.push(headerColumns.join(','));
+    
+    // Add data rows
+    for (let i = 0; i < documents.length; i++) {
+      const doc = documents[i];
+      const vector = vectors[i];
+      const row = [
+        escapeCSV(doc.filename),
+        escapeCSV(doc.topic),
+        escapeCSV(doc.subtopic),
+        ...vector
+      ];
+      csvRows.push(row.join(','));
+    }
+    
+    // Write CSV file
+    const csvContent = csvRows.join('\n');
+    writeFileSync('embeddings.csv', csvContent, 'utf-8');
+    console.log(`Embeddings exported to embeddings.csv (${documents.length} documents, ${embeddingDimensions} dimensions)\n`);
   }
-  csvRows.push(headerColumns.join(','));
-  
-  // Add data rows
-  for (let i = 0; i < documents.length; i++) {
-    const doc = documents[i];
-    const vector = vectors[i];
-    const row = [
-      doc.filename,
-      doc.topic,
-      doc.subtopic,
-      ...vector
-    ];
-    csvRows.push(row.join(','));
-  }
-  
-  // Write CSV file
-  const csvContent = csvRows.join('\n');
-  writeFileSync('embeddings.csv', csvContent, 'utf-8');
-  console.log(`Embeddings exported to embeddings.csv (${documents.length} documents, ${embeddingDimensions} dimensions)\n`);
   
   // Calculate similarity matrix and find most similar pairs
   console.log('='.repeat(80));
@@ -206,6 +221,7 @@ async function detectTextSimilarities() {
   
   // Export similarity results to a tabular format (CSV)
   console.log('\nExporting similarity results to CSV...');
+  
   const similarityRows = [];
   
   // Create header
@@ -217,12 +233,12 @@ async function detectTextSimilarities() {
   for (const sim of similarities) {
     const sameTopic = sim.doc1.topic === sim.doc2.topic ? 'true' : 'false';
     const row = [
-      sim.doc1.filename,
-      sim.doc1.topic,
-      sim.doc1.subtopic,
-      sim.doc2.filename,
-      sim.doc2.topic,
-      sim.doc2.subtopic,
+      escapeCSV(sim.doc1.filename),
+      escapeCSV(sim.doc1.topic),
+      escapeCSV(sim.doc1.subtopic),
+      escapeCSV(sim.doc2.filename),
+      escapeCSV(sim.doc2.topic),
+      escapeCSV(sim.doc2.subtopic),
       sim.similarity.toFixed(6),
       sameTopic
     ];
