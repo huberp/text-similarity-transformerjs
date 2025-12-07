@@ -22,15 +22,29 @@ See [corpus_index.md](corpus_index.md) for the complete list with topics and sub
 
 ## How It Works
 
+The repository provides two complementary text analysis approaches:
+
+### 1. Text Similarity Analysis (Transformer-based)
 The similarity analysis uses:
-1. **Transformer.js** (`@xenova/transformers`) - Run transformer models in Node.js
-2. **Sentence Embeddings** - Uses the `bge-base-en-v1.5` model with 8-bit quantization (q8) to generate embeddings, providing a good balance between model size/performance and accuracy
-3. **Cosine Similarity** - Computes similarity scores between document embeddings
+- **Transformer.js** (`@xenova/transformers`) - Run transformer models in Node.js
+- **Sentence Embeddings** - Uses the `bge-base-en-v1.5` model with 8-bit quantization (q8) to generate embeddings, providing a good balance between model size/performance and accuracy
+- **Cosine Similarity** - Computes similarity scores between document embeddings
 
 The script analyzes:
 - Top most similar document pairs
 - Average similarity within each topic
 - Average similarity across different topics
+
+### 2. TF-IDF Analysis (Classic NLP)
+The TF-IDF analysis uses:
+- **tiny-tfidf** - Minimal implementation of Term Frequency-Inverse Document Frequency
+- **BM25 weighting** - Advanced term weighting scheme for better relevance scoring
+- **Stopword filtering** - Removes common words to focus on distinctive terms
+
+The script computes:
+- Term frequency (TF) for each term in each document
+- Inverse document frequency (IDF) for each term across the corpus
+- Top distinctive terms for each document based on TF-IDF scores
 
 ## Installation
 
@@ -39,6 +53,8 @@ npm install
 ```
 
 ## Usage
+
+### Text Similarity Analysis
 
 Run the similarity analysis locally:
 
@@ -56,26 +72,54 @@ The script will:
    - **embeddings.csv**: Contains filename, topic, subtopic, and all embedding dimensions for each document
    - **similarity_results.csv**: Contains detailed similarity scores between all document pairs
 
+### TF-IDF Analysis
+
+Run the TF-IDF analysis locally:
+
+```bash
+npm run tfidf
+```
+
+The script will:
+1. Read all documents from the test_corpus directory
+2. Compute TF-IDF scores using the tiny-tfidf library
+3. Display top terms for each document
+4. Export two CSV files:
+   - **tf.csv**: Contains term frequency matrix with documents as rows and terms as columns
+   - **idf.csv**: Contains inverse document frequency scores for all terms in the corpus
+
 ### Output Files
 
-The script generates two CSV files that can be used for further analysis:
+The scripts generate CSV files that can be used for further analysis:
 
-**embeddings.csv**
+**embeddings.csv** (from similarity analysis)
 - Contains one row per document with columns: `filename`, `topic`, `subtopic`, `dim_0`, `dim_1`, ..., `dim_N`
 - The embedding dimensions can be loaded into Jupyter/Pandas for analysis and visualization
 - Example: 25 documents with 768-dimensional embeddings
 
-**similarity_results.csv**
+**similarity_results.csv** (from similarity analysis)
 - Contains similarity scores between all document pairs
 - Columns: `document1_filename`, `document1_topic`, `document1_subtopic`, `document2_filename`, `document2_topic`, `document2_subtopic`, `similarity_score`, `same_topic`
 - Sorted by similarity score (highest to lowest)
 - Can be used for detailed similarity analysis and filtering
 
+**tf.csv** (from TF-IDF analysis)
+- Contains term frequency matrix
+- Columns: `document`, `topic`, `subtopic`, followed by all unique terms in the corpus
+- Each cell contains the raw frequency count of a term in a document
+- Example: 25 documents × 1643 unique terms
+
+**idf.csv** (from TF-IDF analysis)
+- Contains inverse document frequency scores
+- Columns: `term`, `idf_weight`, `collection_frequency`
+- Each row represents a unique term with its IDF weight and the number of documents containing it
+- Higher IDF weights indicate more distinctive/rare terms
+
 See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed examples and usage patterns for these CSV files.
 
 ## GitHub Workflows
 
-The repository includes two GitHub Actions workflows:
+The repository includes three GitHub Actions workflows:
 
 ### CI Workflow (`.github/workflows/ci.yml`)
 
@@ -104,6 +148,18 @@ The workflow:
 - Generates embeddings and similarity results
 - Uploads the output CSV files (`embeddings.csv` and `similarity_results.csv`) as workflow artifacts with 90-day retention
 
+### TF-IDF Workflow (`.github/workflows/tfidf.yml`)
+
+The TF-IDF workflow automatically runs the TF-IDF analysis using tiny-tfidf when:
+- Relevant files are modified (`tfidf.js`, workflow file, `test_corpus/**`, `package.json`)
+- Manually triggered (workflow_dispatch)
+
+The workflow:
+- Installs dependencies (including tiny-tfidf)
+- Runs the TF-IDF analysis script
+- Computes term frequency (TF) and inverse document frequency (IDF) for the corpus
+- Uploads the output CSV files (`tf.csv` and `idf.csv`) as workflow artifacts with 90-day retention
+
 **Accessing Workflow Artifacts**: After the workflow runs, you can download the generated CSV files from the workflow run page under the "Artifacts" section.
 
 ## Project Structure
@@ -116,11 +172,13 @@ The workflow:
 │   └── fruit_01.md       # Fruit documents
 ├── corpus_index.md        # Table of all documents
 ├── similarity.js          # Main similarity analysis script
+├── tfidf.js              # TF-IDF analysis script
 ├── package.json          # Node.js dependencies
 └── .github/
     └── workflows/
         ├── ci.yml             # CI workflow (linting, security, conditional checks)
-        └── text-similarity.yml  # Text similarity analysis workflow
+        ├── text-similarity.yml  # Text similarity analysis workflow
+        └── tfidf.yml            # TF-IDF analysis workflow
 ```
 
 ## Requirements

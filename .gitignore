@@ -29,3 +29,5 @@ vector-index/
 # Output files
 embeddings.csv
 similarity_results.csv
+tf.csv
+idf.csv
