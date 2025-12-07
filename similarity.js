@@ -1,14 +1,7 @@
 import { pipeline } from '@xenova/transformers';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-
-// Calculate cosine similarity between two vectors
-function cosineSimilarity(vecA, vecB) {
-  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  return dotProduct / (magnitudeA * magnitudeB);
-}
+import { LocalIndex } from 'vectra';
 
 async function detectTextSimilarities() {
   console.log('Loading embedding model...');
@@ -49,14 +42,33 @@ async function detectTextSimilarities() {
   
   console.log('Computing embeddings for all documents...');
   
-  // Generate embeddings for all documents
-  const embeddings = [];
-  for (const doc of documents) {
-    const output = await extractor(doc.content, { pooling: 'mean', normalize: true });
-    embeddings.push(Array.from(output.data));
+  // Initialize Vectra LocalIndex
+  const index = new LocalIndex('./vector-index');
+  
+  // Check if index exists, if not create it
+  if (!(await index.isIndexCreated())) {
+    await index.createIndex();
   }
   
-  console.log('Embeddings computed successfully!\n');
+  // Generate embeddings and store them in the index
+  for (let i = 0; i < documents.length; i++) {
+    const doc = documents[i];
+    const output = await extractor(doc.content, { pooling: 'mean', normalize: true });
+    const vector = Array.from(output.data);
+    
+    // Store vector with metadata in LocalIndex
+    await index.insertItem({
+      vector,
+      metadata: {
+        id: i,
+        filename: doc.filename,
+        topic: doc.topic,
+        subtopic: doc.subtopic
+      }
+    });
+  }
+  
+  console.log('Embeddings computed and stored in index successfully!\n');
   
   // Calculate similarity matrix and find most similar pairs
   console.log('='.repeat(80));
@@ -81,15 +93,27 @@ async function detectTextSimilarities() {
   }
   console.log();
   
-  // Find top similar pairs across all documents
+  // Find top similar pairs across all documents using LocalIndex queries
   const similarities = [];
   for (let i = 0; i < documents.length; i++) {
-    for (let j = i + 1; j < documents.length; j++) {
-      const similarity = cosineSimilarity(embeddings[i], embeddings[j]);
+    // Get the vector for document i by querying with its own embedding
+    const docOutput = await extractor(documents[i].content, { pooling: 'mean', normalize: true });
+    const queryVector = Array.from(docOutput.data);
+    
+    // Query similar items (will include itself)
+    const results = await index.queryItems(queryVector, documents.length);
+    
+    // Process results, skipping self and documents we've already compared
+    for (const result of results) {
+      const j = result.item.metadata.id;
+      
+      // Skip self-similarity and pairs we've already processed
+      if (j <= i) continue;
+      
       similarities.push({
         doc1: documents[i],
         doc2: documents[j],
-        similarity
+        similarity: result.score
       });
     }
   }
