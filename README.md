@@ -73,12 +73,34 @@ The script generates two CSV files that can be used for further analysis:
 
 See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed examples and usage patterns for these CSV files.
 
-## GitHub Workflow
+## GitHub Workflows
 
-The repository includes a GitHub Actions workflow (`.github/workflows/text-similarity.yml`) that automatically runs the similarity analysis on:
-- Push to main/master branch
-- Pull requests
-- Manual trigger (workflow_dispatch)
+The repository includes two GitHub Actions workflows:
+
+### CI Workflow (`.github/workflows/ci.yml`)
+
+The CI workflow runs on all pushes and pull requests and includes:
+
+1. **Linting**: Runs ESLint to check code quality
+2. **Security Check** (PR only): 
+   - Detects when dependencies are added or updated in pull requests
+   - Automatically triggered for Dependabot PRs or any PR that modifies `package.json`/`package-lock.json`
+   - Runs security audit using npm audit (GitHub Advisory Database)
+   - Posts a comment on the PR with security findings and risk assessment
+3. **Conditional Similarity Analysis** (PR only):
+   - Only runs when PR modifies `similarity.js` or `.github/workflows/text-similarity.yml`
+   - Ensures the similarity script still works correctly after changes
+
+### Text Similarity Workflow (`.github/workflows/text-similarity.yml`)
+
+The text similarity workflow automatically runs the similarity analysis when:
+- Relevant files are modified (`similarity.js`, workflow file, `test_corpus/**`, `package.json`)
+- Manually triggered (workflow_dispatch)
+
+The workflow:
+- Installs dependencies
+- Runs the text similarity analysis script
+- Generates embeddings and similarity results
 
 ## Project Structure
 
@@ -93,7 +115,8 @@ The repository includes a GitHub Actions workflow (`.github/workflows/text-simil
 ├── package.json          # Node.js dependencies
 └── .github/
     └── workflows/
-        └── text-similarity.yml  # GitHub Actions workflow
+        ├── ci.yml             # CI workflow (linting, security, conditional checks)
+        └── text-similarity.yml  # Text similarity analysis workflow
 ```
 
 ## Requirements
