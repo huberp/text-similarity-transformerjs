@@ -10,7 +10,7 @@ const IDF_DECIMAL_PLACES = 6;
 function stemText(text) {
   // Use the same tokenization pattern as tiny-tfidf's Document class
   const matches = text.match(/[a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/g);
-  if (!matches) return text;
+  if (!matches) return '';
   
   const stemmedWords = matches
     .map(word => word.toLowerCase())
@@ -24,7 +24,15 @@ function stemText(text) {
       }
       return true;
     })
-    .map(word => natural.PorterStemmer.stem(word));
+    .map(word => {
+      try {
+        return natural.PorterStemmer.stem(word);
+      } catch (error) {
+        // If stemming fails for any reason, return the original word
+        console.warn(`Warning: Failed to stem word "${word}":`, error.message);
+        return word;
+      }
+    });
   
   // Join stemmed words back into a string
   return stemmedWords.join(' ');
