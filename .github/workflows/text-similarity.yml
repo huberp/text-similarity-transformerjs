@@ -26,5 +26,8 @@ jobs:
     - name: Install dependencies
       run: npm install
       
+    - name: Run linter
+      run: npm run lint
+      
     - name: Run text similarity analysis
       run: npm run similarity

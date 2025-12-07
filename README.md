@@ -81,6 +81,18 @@ The repository includes a GitHub Actions workflow (`.github/workflows/text-simil
 - Node.js 20 or higher
 - npm
 
+## Contributing
+
+This project uses the following labels to categorize issues and pull requests:
+
+- **bug** - Something isn't working correctly
+- **enhancement** - New feature or improvement request
+- **documentation** - Improvements or additions to documentation
+- **good first issue** - Good for newcomers to the project
+- **help wanted** - Extra attention is needed
+- **question** - Further information is requested
+- **dependencies** - Updates to project dependencies
+
 ## License
 
 MIT
