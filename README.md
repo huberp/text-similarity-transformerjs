@@ -24,7 +24,7 @@ See [corpus_index.md](corpus_index.md) for the complete list with topics and sub
 
 The similarity analysis uses:
 1. **Transformer.js** (`@xenova/transformers`) - Run transformer models in Node.js
-2. **Sentence Embeddings** - Uses the `all-MiniLM-L6-v2` model to generate embeddings
+2. **Sentence Embeddings** - Uses the `bge-base-en-v1.5` model with 8-bit quantization (q8) to generate embeddings, providing a good balance between model size/performance and accuracy
 3. **Cosine Similarity** - Computes similarity scores between document embeddings
 
 The script analyzes:
@@ -63,7 +63,7 @@ The script generates two CSV files that can be used for further analysis:
 **embeddings.csv**
 - Contains one row per document with columns: `filename`, `topic`, `subtopic`, `dim_0`, `dim_1`, ..., `dim_N`
 - The embedding dimensions can be loaded into Jupyter/Pandas for analysis and visualization
-- Example: 25 documents with 384-dimensional embeddings
+- Example: 25 documents with 768-dimensional embeddings
 
 **similarity_results.csv**
 - Contains similarity scores between all document pairs
