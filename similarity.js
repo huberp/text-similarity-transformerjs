@@ -51,10 +51,13 @@ async function detectTextSimilarities() {
   }
   
   // Generate embeddings and store them in the index
+  // Also keep vectors in memory for querying
+  const vectors = [];
   for (let i = 0; i < documents.length; i++) {
     const doc = documents[i];
     const output = await extractor(doc.content, { pooling: 'mean', normalize: true });
     const vector = Array.from(output.data);
+    vectors.push(vector);
     
     // Store vector with metadata in LocalIndex
     await index.insertItem({
@@ -96,11 +99,11 @@ async function detectTextSimilarities() {
   // Find top similar pairs across all documents using LocalIndex queries
   const similarities = [];
   for (let i = 0; i < documents.length; i++) {
-    // Get the vector for document i by querying with its own embedding
-    const docOutput = await extractor(documents[i].content, { pooling: 'mean', normalize: true });
-    const queryVector = Array.from(docOutput.data);
+    // Use the already computed vector for document i
+    const queryVector = vectors[i];
     
     // Query similar items (will include itself)
+    // Use documents.length to get all results for complete similarity matrix
     const results = await index.queryItems(queryVector, documents.length);
     
     // Process results, skipping self and documents we've already compared
