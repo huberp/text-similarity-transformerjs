@@ -84,9 +84,13 @@ The script will:
 1. Read all documents from the test_corpus directory
 2. Compute TF-IDF scores using the tiny-tfidf library
 3. Display top terms for each document
-4. Export two CSV files:
-   - **tf.csv**: Contains term frequency matrix with documents as rows and terms as columns
-   - **idf.csv**: Contains inverse document frequency scores for all terms in the corpus
+4. Export six CSV files:
+   - **tf.csv**: Contains term frequency matrix with documents as rows and terms as columns (wide format)
+   - **tf_sparse.csv**: Contains term frequency in sparse format (document_id, term_id, frequency) - more efficient for large corpora
+   - **idf.csv**: Contains inverse document frequency scores for all terms in the corpus (sorted by idf_weight)
+   - **document_index.csv**: Maps document IDs to document filenames
+   - **term_index.csv**: Maps term IDs to terms (sorted by idf_weight)
+   - **term_documents.csv**: Inverted index showing which documents contain each term
 
 ### Output Files
 
@@ -104,16 +108,43 @@ The scripts generate CSV files that can be used for further analysis:
 - Can be used for detailed similarity analysis and filtering
 
 **tf.csv** (from TF-IDF analysis)
-- Contains term frequency matrix
+- Contains term frequency matrix in wide format
 - Columns: `document`, `topic`, `subtopic`, followed by all unique terms in the corpus
 - Each cell contains the raw frequency count of a term in a document
 - Example: 25 documents × 1643 unique terms
+- Note: This format is not recommended for large corpora (use tf_sparse.csv instead)
+
+**tf_sparse.csv** (from TF-IDF analysis)
+- Contains term frequency in sparse format for efficient storage
+- Columns: `document_id`, `term_id`, `frequency`
+- Only includes entries where a term appears in a document (frequency > 0)
+- More efficient for large corpora as it avoids storing zeros
+- Use with document_index.csv and term_index.csv to look up actual document names and terms
 
 **idf.csv** (from TF-IDF analysis)
 - Contains inverse document frequency scores
 - Columns: `term`, `idf_weight`, `collection_frequency`
+- Sorted by `idf_weight` in descending order (most distinctive terms first)
 - Each row represents a unique term with its IDF weight and the number of documents containing it
 - Higher IDF weights indicate more distinctive/rare terms
+
+**document_index.csv** (from TF-IDF analysis)
+- Maps numeric document IDs to document filenames
+- Columns: `document_id`, `document`, `topic`, `subtopic`
+- Used to look up document names from IDs in tf_sparse.csv and term_documents.csv
+
+**term_index.csv** (from TF-IDF analysis)
+- Maps numeric term IDs to terms
+- Columns: `term_id`, `term`, `idf_weight`, `collection_frequency`
+- Sorted by `idf_weight` in descending order (same order as idf.csv)
+- Used to look up term names from IDs in tf_sparse.csv
+
+**term_documents.csv** (from TF-IDF analysis)
+- Inverted index showing which documents contain each term
+- Columns: `term_id`, `term`, `document_ids`
+- The `document_ids` column contains a semicolon-separated list of document IDs
+- Useful for finding all documents containing a specific term
+- Example: For term "fruits", document_ids might be "0;1;2;3;4;5;6;7;8"
 
 See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed examples and usage patterns for these CSV files.
 
@@ -158,7 +189,7 @@ The workflow:
 - Installs dependencies (including tiny-tfidf)
 - Runs the TF-IDF analysis script
 - Computes term frequency (TF) and inverse document frequency (IDF) for the corpus
-- Uploads the output CSV files (`tf.csv` and `idf.csv`) as workflow artifacts with 90-day retention
+- Uploads the output CSV files (`tf.csv`, `tf_sparse.csv`, `idf.csv`, `document_index.csv`, `term_index.csv`, and `term_documents.csv`) as workflow artifacts with 90-day retention
 
 **Accessing Workflow Artifacts**: After the workflow runs, you can download the generated CSV files from the workflow run page under the "Artifacts" section.
 

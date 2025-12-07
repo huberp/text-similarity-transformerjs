@@ -90,6 +90,163 @@ doc_similarities = similarities[
 ]
 ```
 
+## TF-IDF CSV Outputs
+
+The TF-IDF analysis script generates six CSV files for comprehensive term frequency and document analysis.
+
+### tf.csv
+
+This file contains the term frequency matrix in wide format (one row per document, one column per term).
+
+**Format:**
+```csv
+document,topic,subtopic,term1,term2,term3,...,termN
+fruit_01.md,Fruit,Citrus,10,6,1,...,0
+fruit_02.md,Fruit,Berries,0,4,0,...,1
+...
+```
+
+**Columns:**
+- `document`: The name of the document file
+- `topic`: The main topic category
+- `subtopic`: The specific subtopic
+- Followed by one column for each unique term in the corpus with its frequency count
+
+**Note:** This format is not recommended for large corpora as it creates a very wide matrix. Use `tf_sparse.csv` instead for better efficiency.
+
+### tf_sparse.csv
+
+This file contains term frequency data in sparse format, only storing non-zero entries.
+
+**Format:**
+```csv
+document_id,term_id,frequency
+0,0,10
+0,1624,6
+1,1624,4
+...
+```
+
+**Columns:**
+- `document_id`: Numeric ID of the document (use document_index.csv to look up the filename)
+- `term_id`: Numeric ID of the term (use term_index.csv to look up the term text)
+- `frequency`: Raw frequency count of the term in the document
+
+**Usage:**
+```python
+import pandas as pd
+
+# Load all related files
+tf_sparse = pd.read_csv('tf_sparse.csv')
+doc_index = pd.read_csv('document_index.csv')
+term_index = pd.read_csv('term_index.csv')
+
+# Join to get readable results
+tf_readable = tf_sparse \
+    .merge(doc_index, on='document_id') \
+    .merge(term_index, on='term_id')
+
+# Find all terms in a specific document
+doc_terms = tf_readable[tf_readable['document'] == 'fruit_01.md']
+print(doc_terms[['term', 'frequency', 'idf_weight']].sort_values('frequency', ascending=False))
+```
+
+### idf.csv
+
+This file contains inverse document frequency scores for all terms, sorted by IDF weight.
+
+**Format:**
+```csv
+term,idf_weight,collection_frequency
+citrus,3.258097,1
+overview,3.258097,1
+...
+topic,0.039221,25
+```
+
+**Columns:**
+- `term`: The term text
+- `idf_weight`: The IDF weight (higher = more distinctive/rare)
+- `collection_frequency`: Number of documents containing this term
+
+**Sorting:** Terms are sorted by `idf_weight` in descending order, so the most distinctive terms appear first.
+
+### document_index.csv
+
+This file maps numeric document IDs to document filenames and metadata.
+
+**Format:**
+```csv
+document_id,document,topic,subtopic
+0,fruit_01.md,Fruit,Citrus
+1,fruit_02.md,Fruit,Berries
+2,fruit_03.md,Fruit,Tropical
+...
+```
+
+**Columns:**
+- `document_id`: Numeric identifier for the document
+- `document`: The document filename
+- `topic`: The main topic category
+- `subtopic`: The specific subtopic
+
+### term_index.csv
+
+This file maps numeric term IDs to terms, sorted by IDF weight.
+
+**Format:**
+```csv
+term_id,term,idf_weight,collection_frequency
+0,citrus,3.258097,1
+1,overview,3.258097,1
+2,group,3.258097,1
+...
+```
+
+**Columns:**
+- `term_id`: Numeric identifier for the term
+- `term`: The term text
+- `idf_weight`: The IDF weight (higher = more distinctive/rare)
+- `collection_frequency`: Number of documents containing this term
+
+**Sorting:** Terms are sorted by `idf_weight` in descending order, matching the sort order of `idf.csv`.
+
+### term_documents.csv
+
+This file is an inverted index showing which documents contain each term.
+
+**Format:**
+```csv
+term_id,term,document_ids
+0,citrus,0
+1,overview,0
+1624,fruits,0;1;2;3;4;5;6;7;8
+...
+```
+
+**Columns:**
+- `term_id`: Numeric identifier for the term
+- `term`: The term text
+- `document_ids`: Semicolon-separated list of document IDs that contain this term
+
+**Usage:**
+```python
+import pandas as pd
+
+# Load the inverted index
+term_docs = pd.read_csv('term_documents.csv')
+doc_index = pd.read_csv('document_index.csv')
+
+# Find all documents containing a specific term
+term_row = term_docs[term_docs['term'] == 'fruits'].iloc[0]
+doc_ids = [int(x) for x in term_row['document_ids'].split(';')]
+
+# Look up the document names
+matching_docs = doc_index[doc_index['document_id'].isin(doc_ids)]
+print(f"Documents containing 'fruits':")
+print(matching_docs[['document', 'topic', 'subtopic']])
+```
+
 ## Console Output
 
 The script continues to display the same printf-style console output as before, showing:

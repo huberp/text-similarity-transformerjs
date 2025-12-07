@@ -113,11 +113,19 @@ function computeTFIDF() {
   // Create header row: term, idf_weight, collection_frequency
   idfRows.push(['term', 'idf_weight', 'collection_frequency'].map(escapeCSV).join(','));
   
-  // Add data rows - one row per term
+  // Collect all IDF data and sort by idf_weight (descending)
+  const idfData = [];
   for (const term of allTerms) {
     const idfWeight = corpus.getCollectionFrequencyWeight(term);
     const collectionFreq = corpus.getCollectionFrequency(term);
-    
+    idfData.push({ term, idfWeight, collectionFreq });
+  }
+  
+  // Sort by idf_weight in descending order (most distinctive terms first)
+  idfData.sort((a, b) => b.idfWeight - a.idfWeight);
+  
+  // Add sorted data rows - one row per term
+  for (const { term, idfWeight, collectionFreq } of idfData) {
     const row = [term, idfWeight.toFixed(IDF_DECIMAL_PLACES), collectionFreq];
     idfRows.push(row.map(escapeCSV).join(','));
   }
@@ -125,7 +133,99 @@ function computeTFIDF() {
   // Write IDF CSV file
   const idfContent = idfRows.join('\n');
   writeFileSync('idf.csv', idfContent, 'utf-8');
-  console.log(`IDF report exported to idf.csv (${allTerms.length} terms)\n`);
+  console.log(`IDF report exported to idf.csv (${allTerms.length} terms, sorted by idf_weight)\n`);
+  
+  // Export Document Index CSV
+  console.log('Generating Document Index CSV...');
+  
+  const docIndexRows = [];
+  docIndexRows.push(['document_id', 'document', 'topic', 'subtopic'].map(escapeCSV).join(','));
+  
+  for (let i = 0; i < documents.length; i++) {
+    const doc = documents[i];
+    const row = [i, doc.filename, doc.topic, doc.subtopic];
+    docIndexRows.push(row.map(escapeCSV).join(','));
+  }
+  
+  const docIndexContent = docIndexRows.join('\n');
+  writeFileSync('document_index.csv', docIndexContent, 'utf-8');
+  console.log(`Document index exported to document_index.csv (${documents.length} documents)\n`);
+  
+  // Export Term Index CSV (using sorted idfData order)
+  console.log('Generating Term Index CSV...');
+  
+  const termIndexRows = [];
+  termIndexRows.push(['term_id', 'term', 'idf_weight', 'collection_frequency'].map(escapeCSV).join(','));
+  
+  for (let i = 0; i < idfData.length; i++) {
+    const { term, idfWeight, collectionFreq } = idfData[i];
+    const row = [i, term, idfWeight.toFixed(IDF_DECIMAL_PLACES), collectionFreq];
+    termIndexRows.push(row.map(escapeCSV).join(','));
+  }
+  
+  const termIndexContent = termIndexRows.join('\n');
+  writeFileSync('term_index.csv', termIndexContent, 'utf-8');
+  console.log(`Term index exported to term_index.csv (${idfData.length} terms)\n`);
+  
+  // Export Term-Documents Inverted Index CSV
+  console.log('Generating Term-Documents Inverted Index CSV...');
+  
+  const termDocsRows = [];
+  termDocsRows.push(['term_id', 'term', 'document_ids'].map(escapeCSV).join(','));
+  
+  // Build inverted index: for each term, find all documents containing it
+  for (let termId = 0; termId < idfData.length; termId++) {
+    const { term } = idfData[termId];
+    const docIds = [];
+    
+    for (let docId = 0; docId < documents.length; docId++) {
+      const docName = documentNames[docId];
+      const docObj = corpus.getDocument(docName);
+      const tf = docObj.getTermFrequency(term);
+      
+      if (tf > 0) {
+        docIds.push(docId);
+      }
+    }
+    
+    const row = [termId, term, docIds.join(';')];
+    termDocsRows.push(row.map(escapeCSV).join(','));
+  }
+  
+  const termDocsContent = termDocsRows.join('\n');
+  writeFileSync('term_documents.csv', termDocsContent, 'utf-8');
+  console.log(`Term-documents inverted index exported to term_documents.csv (${idfData.length} terms)\n`);
+  
+  // Export TF in sparse format (document_id, term_id, frequency)
+  console.log('Generating TF Sparse Format CSV...');
+  
+  const tfSparseRows = [];
+  tfSparseRows.push(['document_id', 'term_id', 'frequency'].map(escapeCSV).join(','));
+  
+  // Create a term to termId mapping for quick lookup
+  const termToId = new Map();
+  for (let i = 0; i < idfData.length; i++) {
+    termToId.set(idfData[i].term, i);
+  }
+  
+  for (let docId = 0; docId < documents.length; docId++) {
+    const docName = documentNames[docId];
+    const docObj = corpus.getDocument(docName);
+    
+    // Get all terms in this document
+    for (const term of allTerms) {
+      const tf = docObj.getTermFrequency(term);
+      if (tf > 0) {
+        const termId = termToId.get(term);
+        const row = [docId, termId, tf];
+        tfSparseRows.push(row.map(escapeCSV).join(','));
+      }
+    }
+  }
+  
+  const tfSparseContent = tfSparseRows.join('\n');
+  writeFileSync('tf_sparse.csv', tfSparseContent, 'utf-8');
+  console.log(`TF sparse format exported to tf_sparse.csv (more efficient for large corpora)\n`);
   
   // Display some statistics
   console.log('='.repeat(80));
@@ -150,8 +250,12 @@ function computeTFIDF() {
   console.log('Analysis complete!');
   console.log('='.repeat(80));
   console.log('\nGenerated files:');
-  console.log('  - tf.csv: Term frequency matrix');
-  console.log('  - idf.csv: Inverse document frequency scores');
+  console.log('  - tf.csv: Term frequency matrix (wide format, one row per document)');
+  console.log('  - tf_sparse.csv: Term frequency in sparse format (document_id, term_id, frequency)');
+  console.log('  - idf.csv: Inverse document frequency scores (sorted by idf_weight)');
+  console.log('  - document_index.csv: Document ID to filename mapping');
+  console.log('  - term_index.csv: Term ID to term mapping (sorted by idf_weight)');
+  console.log('  - term_documents.csv: Inverted index showing which documents contain each term');
 }
 
 // Run the analysis
