@@ -70,7 +70,12 @@ jobs:
       if: steps.check-package-changes.outputs.has_package_changes == 'true'
       run: |
         # Get the base package.json
-        git show origin/${{ github.event.pull_request.base.ref }}:package.json > base-package.json || echo '{}' > base-package.json
+        if git show origin/${{ github.event.pull_request.base.ref }}:package.json > base-package.json 2>/dev/null; then
+          echo "Base package.json retrieved successfully"
+        else
+          echo "Warning: Could not retrieve base package.json, treating as if no dependencies existed"
+          echo '{"dependencies": {}, "devDependencies": {}}' > base-package.json
+        fi
         
         # Get current package.json
         cp package.json current-package.json
@@ -93,7 +98,8 @@ jobs:
             // Determine ecosystem (for npm it is always npm)
             const ecosystem = "npm";
             // Remove version specifiers like ^, ~, >=, etc. to get clean version
-            const cleanVersion = version.replace(/^[\^~>=<]*/, "");
+            // Handle complex version ranges by extracting the first valid semver
+            const cleanVersion = version.replace(/^[\^~>=<]+/, '').split(/[\s||]+/)[0];
             changes.push({ name, version: cleanVersion, ecosystem });
           }
         }
@@ -126,8 +132,18 @@ jobs:
         echo "Running security audit on new/updated dependencies..."
         npm install --package-lock-only
         
-        # Run npm audit and capture results
-        npm audit --json > audit-results.json || true
+        # Run npm audit and capture results and exit code
+        set +e
+        npm audit --json > audit-results.json
+        AUDIT_EXIT_CODE=$?
+        set -e
+        
+        # Check if audit ran successfully (exit codes 0 or 1 are expected)
+        # 0 = no vulnerabilities, 1 = vulnerabilities found
+        if [ $AUDIT_EXIT_CODE -gt 1 ]; then
+          echo "⚠️ npm audit encountered an error (exit code: $AUDIT_EXIT_CODE)"
+          echo '{"error": "npm audit failed", "exit_code": '$AUDIT_EXIT_CODE'}' > audit-results.json
+        fi
         
         # Parse and display results
         node -e '
@@ -142,9 +158,18 @@ jobs:
         console.log("=".repeat(80));
         console.log();
         
+        // Check for npm audit errors
+        if (auditResults.error) {
+          console.log(`❌ npm audit failed: ${auditResults.error}`);
+          console.log(`   Exit code: ${auditResults.exit_code || "unknown"}`);
+          console.log();
+        }
+        
+        let hasRelevantVulns = false;
+        
+        // Check vulnerabilities field
         if (auditResults.vulnerabilities) {
           const vulns = auditResults.vulnerabilities;
-          let hasRelevantVulns = false;
           
           for (const [pkgName, vulnInfo] of Object.entries(vulns)) {
             // Check if this vulnerability affects a changed dependency
@@ -163,24 +188,26 @@ jobs:
               console.log();
             }
           }
-          
-          if (!hasRelevantVulns) {
-            console.log("✅ No vulnerabilities found in changed dependencies");
-          }
-        } else if (auditResults.metadata) {
+        }
+        
+        // Also check metadata for summary
+        if (auditResults.metadata && auditResults.metadata.vulnerabilities) {
           const meta = auditResults.metadata.vulnerabilities;
-          if (meta && (meta.total > 0)) {
-            console.log(`ℹ️  Found ${meta.total} total vulnerabilities in dependency tree`);
+          if (meta.total > 0) {
+            console.log(`ℹ️  Total vulnerabilities in dependency tree: ${meta.total}`);
             console.log(`   Critical: ${meta.critical || 0}`);
             console.log(`   High: ${meta.high || 0}`);
             console.log(`   Moderate: ${meta.moderate || 0}`);
             console.log(`   Low: ${meta.low || 0}`);
-          } else {
-            console.log("✅ No vulnerabilities found");
+            console.log();
           }
         }
         
-        console.log();
+        if (!hasRelevantVulns && !auditResults.error) {
+          console.log("✅ No vulnerabilities found in changed dependencies");
+          console.log();
+        }
+        
         console.log("Changed dependencies:");
         changedDeps.forEach(dep => {
           console.log(`  - ${dep.name}@${dep.version}`);
@@ -208,7 +235,12 @@ jobs:
           // Read audit results
           const auditResults = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
           
-          if (auditResults.metadata && auditResults.metadata.vulnerabilities) {
+          // Check for audit errors
+          if (auditResults.error) {
+            comment += '### ❌ Security Audit Error\n\n';
+            comment += `The security audit failed: ${auditResults.error}\n\n`;
+            comment += 'Please check the workflow logs for more details.\n';
+          } else if (auditResults.metadata && auditResults.metadata.vulnerabilities) {
             const meta = auditResults.metadata.vulnerabilities;
             const total = meta.total || 0;
             
@@ -224,6 +256,9 @@ jobs:
               comment += '### ✅ No vulnerabilities detected\n\n';
               comment += 'All dependencies passed security checks.\n';
             }
+          } else {
+            comment += '### ✅ No vulnerabilities detected\n\n';
+            comment += 'All dependencies passed security checks.\n';
           }
           
           // Post comment
