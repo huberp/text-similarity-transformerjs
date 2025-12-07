@@ -324,3 +324,13 @@ jobs:
       
     - name: Run text similarity analysis
       run: npm run similarity
+      
+    - name: Upload similarity analysis outputs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: similarity-outputs-pr
+        path: |
+          embeddings.csv
+          similarity_results.csv
+        retention-days: 90

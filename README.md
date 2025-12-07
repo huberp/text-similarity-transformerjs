@@ -90,6 +90,7 @@ The CI workflow runs on all pushes and pull requests and includes:
 3. **Conditional Similarity Analysis** (PR only):
    - Only runs when PR modifies `similarity.js` or `.github/workflows/text-similarity.yml`
    - Ensures the similarity script still works correctly after changes
+   - Uploads the output CSV files as workflow artifacts with 90-day retention
 
 ### Text Similarity Workflow (`.github/workflows/text-similarity.yml`)
 
@@ -101,6 +102,9 @@ The workflow:
 - Installs dependencies
 - Runs the text similarity analysis script
 - Generates embeddings and similarity results
+- Uploads the output CSV files (`embeddings.csv` and `similarity_results.csv`) as workflow artifacts with 90-day retention
+
+**Accessing Workflow Artifacts**: After the workflow runs, you can download the generated CSV files from the workflow run page under the "Artifacts" section.
 
 ## Project Structure
 
