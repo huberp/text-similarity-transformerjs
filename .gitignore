@@ -22,3 +22,6 @@ Thumbs.db
 # Model cache
 .cache/
 models/
+
+# Vectra vector index
+vector-index/
