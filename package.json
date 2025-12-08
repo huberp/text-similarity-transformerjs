@@ -5,6 +5,8 @@
   "main": "similarity.js",
   "type": "module",
   "scripts": {
+    "embeddings": "node embeddings.js",
+    "similarity-analysis": "node similarity-analysis.js",
     "similarity": "node similarity.js",
     "tfidf": "node tfidf.js",
     "lint": "eslint *.js"
