@@ -67,8 +67,16 @@ jobs:
           
     - name: Wait for embeddings workflow
       run: |
-        echo "Waiting for embeddings workflow to complete..."
-        echo "Please re-run this workflow after embeddings are computed and committed."
+        echo "=========================================="
+        echo "LocalIndex does not exist!"
+        echo "=========================================="
+        echo ""
+        echo "The embeddings workflow has been triggered automatically."
+        echo "This workflow will fail now, but you can:"
+        echo "  1. Wait for the embeddings workflow to complete and commit the LocalIndex"
+        echo "  2. Re-run this workflow after the LocalIndex is available"
+        echo ""
+        echo "Alternatively, run 'npm run embeddings' locally to generate the LocalIndex."
         exit 1
 
   similarity-analysis:

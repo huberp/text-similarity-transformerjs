@@ -109,7 +109,13 @@ async function computeEmbeddings() {
       const vector = vectors[i];
       // Ensure vector values are numeric
       const numericVector = Array.isArray(vector) 
-        ? vector.map(v => (typeof v === 'number' && !isNaN(v)) ? v : 0)
+        ? vector.map((v, idx) => {
+            if (typeof v !== 'number' || isNaN(v)) {
+              console.warn(`Warning: Invalid value at dimension ${idx} for ${doc.filename}, replacing with 0`);
+              return 0;
+            }
+            return v;
+          })
         : [];
       const row = [
         escapeCSV(doc.filename),
