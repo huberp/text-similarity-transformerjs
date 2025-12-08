@@ -32,3 +32,8 @@ models/
 /document_index.csv
 /term_index.csv
 /term_documents.csv
+/tfidf_vectors.csv
+
+# Vector indices
+/vector-index/
+/tfidf-vector-index/

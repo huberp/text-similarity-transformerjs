@@ -1,0 +1,46 @@
+name: TF-IDF Vector Store
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'tfidf-data/**'
+      - 'tfidf-vectors.js'
+      - '.github/workflows/tfidf-vectors.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: tfidf-vectors-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tfidf-vectors:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build TF-IDF vector store
+      run: npm run tfidf-vectors
+      
+    - name: Upload TF-IDF vector store
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: tfidf-vector-store
+        path: |
+          tfidf-vector-index/
+          tfidf_vectors.csv
+        retention-days: 90
