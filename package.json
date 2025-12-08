@@ -9,6 +9,7 @@
     "similarity-analysis": "node similarity-analysis.js",
     "similarity": "node similarity.js",
     "tfidf": "node tfidf.js",
+    "tfidf-vectors": "node tfidf-vectors.js",
     "lint": "eslint *.js"
   },
   "keywords": [
