@@ -1,4 +1,4 @@
-name: Text Similarity Analysis
+name: 020 Helper / Manual Text Similarity Analysis
 # NOTE: This workflow computes embeddings and similarity in one go.
 # For split workflows, see:
 # - embeddings-vectors.yml (computes embeddings, commits LocalIndex)
