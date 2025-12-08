@@ -30,7 +30,7 @@ jobs:
       run: npm run similarity
       
     - name: Upload similarity analysis outputs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: always()
       with:
         name: similarity-outputs
