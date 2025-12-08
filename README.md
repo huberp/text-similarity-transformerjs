@@ -1,277 +1,220 @@
 # text-similarity-transformerjs
 
-A GitHub repository demonstrating text similarity analysis using Transformer.js. This project uses embeddings from transformer models to detect similarities between documents in a test corpus.
+A practical demonstration of text similarity analysis using modern NLP techniques. This repository compares transformer-based embeddings with classical TF-IDF approaches for semantic document similarity.
 
 ## Overview
 
-This repository contains:
-- **Test Corpus**: 25 markdown documents across 3 topics (Math, Fruit, LLM)
-- **Corpus Index**: A table listing all documents with their topics and subtopics
-- **Similarity Script**: Node.js script using Transformer.js to compute document similarities
-- **GitHub Workflow**: Automated workflow that runs similarity analysis
+This project helps you understand how different NLP techniques detect semantic similarity between documents. It includes a test corpus of 25 documents across three topics (LLM, Math, Fruit) and provides ready-to-use scripts for:
 
-## Test Corpus
+- **Transformer-based Analysis**: Using state-of-the-art sentence embeddings to find semantically similar documents
+- **Classical NLP Analysis**: Using TF-IDF for term-based document comparison
+- **Vector Storage**: Local vector databases for efficient similarity search
+- **Automated Workflows**: GitHub Actions for continuous analysis and testing
 
-The test corpus contains 25 short text documents (max 400 words each) organized by topic:
-
-- **LLM** (8 documents): Documents about Large Language Models covering various subtopics like architecture, prompting, tokenization, RAG, evaluation, constraints, learning paradigms, and safety
-- **Math** (8 documents): Mathematical topics including linear algebra, calculus, probability, number theory, graph theory, statistics, geometry, and discrete mathematics  
-- **Fruit** (9 documents): Various fruit categories including citrus, berries, tropical fruits, stone fruits, apples, melons, grapes, exotic varieties, and pomegranates
-
-See [corpus_index.md](corpus_index.md) for the complete list with topics and subtopics.
-
-## How It Works
-
-The repository provides two complementary text analysis approaches:
-
-### 1. Text Similarity Analysis (Transformer-based)
-The similarity analysis uses:
-- **Transformer.js** (`@xenova/transformers`) - Run transformer models in Node.js
-- **Sentence Embeddings** - Uses the `bge-base-en-v1.5` model with 8-bit quantization (q8) to generate embeddings, providing a good balance between model size/performance and accuracy
-- **Cosine Similarity** - Computes similarity scores between document embeddings
-
-The script analyzes:
-- Top most similar document pairs
-- Average similarity within each topic
-- Average similarity across different topics
-
-### 2. TF-IDF Analysis (Classic NLP)
-The TF-IDF analysis uses:
-- **tiny-tfidf** - Minimal implementation of Term Frequency-Inverse Document Frequency
-- **BM25 weighting** - Advanced term weighting scheme for better relevance scoring
-- **Stopword filtering** - Removes common words to focus on distinctive terms
-
-The script computes:
-- Term frequency (TF) for each term in each document
-- Inverse document frequency (IDF) for each term across the corpus
-- Top distinctive terms for each document based on TF-IDF scores
-
-## Installation
-
-```bash
-npm install
-```
-
-## Usage
-
-### Text Similarity Analysis
-
-Run the similarity analysis locally:
-
-```bash
-npm run similarity
-```
-
-The script will:
-1. Load the embedding model
-2. Read all documents from the test_corpus directory
-3. Generate embeddings for each document
-4. Calculate similarity scores between all document pairs
-5. Display analysis results including top similar pairs and topic-based statistics
-6. Export two CSV files:
-   - **embeddings.csv**: Contains filename, topic, subtopic, and all embedding dimensions for each document
-   - **similarity_results.csv**: Contains detailed similarity scores between all document pairs
-
-### TF-IDF Analysis
-
-Run the TF-IDF analysis locally:
-
-```bash
-npm run tfidf
-```
-
-The script will:
-1. Read all documents from the test_corpus directory
-2. Compute TF-IDF scores using the tiny-tfidf library
-3. Display top terms for each document
-4. Export six CSV files:
-   - **tf.csv**: Contains term frequency matrix with documents as rows and terms as columns (wide format)
-   - **tf_sparse.csv**: Contains term frequency in sparse format (document_id, term_id, frequency) - more efficient for large corpora
-   - **idf.csv**: Contains inverse document frequency scores for all terms in the corpus (sorted by idf_weight)
-   - **document_index.csv**: Maps document IDs to document filenames
-   - **term_index.csv**: Maps term IDs to terms (sorted by idf_weight)
-   - **term_documents.csv**: Inverted index showing which documents contain each term
-
-### TF-IDF Vector Store
-
-Build a vector store using normalized TF-IDF vectors:
-
-```bash
-npm run tfidf-vectors
-```
-
-The script will:
-1. Read TF-IDF data from the tfidf-data directory (generated by `npm run tfidf`)
-2. Build TF-IDF vectors for each document (one vector per document, indexed by term ID)
-3. Normalize each vector to unit size using L2 normalization
-4. Create a LocalIndex vector store in the tfidf-vector-index directory
-5. Export normalized vectors to tfidf_vectors.csv for analysis
-
-This creates a second vector store that can be used for similarity queries based on TF-IDF rather than transformer embeddings. The normalized vectors can be compared with the transformer-based embeddings to understand the differences between classical NLP and deep learning approaches.
-
-### Output Files
-
-The scripts generate CSV files that can be used for further analysis:
-
-**embeddings.csv** (from similarity analysis)
-- Contains one row per document with columns: `filename`, `topic`, `subtopic`, `dim_0`, `dim_1`, ..., `dim_N`
-- The embedding dimensions can be loaded into Jupyter/Pandas for analysis and visualization
-- Example: 25 documents with 768-dimensional embeddings
-
-**similarity_results.csv** (from similarity analysis)
-- Contains similarity scores between all document pairs
-- Columns: `document1_filename`, `document1_topic`, `document1_subtopic`, `document2_filename`, `document2_topic`, `document2_subtopic`, `similarity_score`, `same_topic`
-- Sorted by similarity score (highest to lowest)
-- Can be used for detailed similarity analysis and filtering
-
-**tf.csv** (from TF-IDF analysis)
-- Contains term frequency matrix in wide format
-- Columns: `document`, `topic`, `subtopic`, followed by all unique terms in the corpus
-- Each cell contains the raw frequency count of a term in a document
-- Example: 25 documents × 1643 unique terms
-- Note: This format is not recommended for large corpora (use tf_sparse.csv instead)
-
-**tf_sparse.csv** (from TF-IDF analysis)
-- Contains term frequency in sparse format for efficient storage
-- Columns: `document_id`, `term_id`, `frequency`
-- Only includes entries where a term appears in a document (frequency > 0)
-- More efficient for large corpora as it avoids storing zeros
-- Use with document_index.csv and term_index.csv to look up actual document names and terms
-
-**idf.csv** (from TF-IDF analysis)
-- Contains inverse document frequency scores
-- Columns: `term`, `idf_weight`, `collection_frequency`
-- Sorted by `idf_weight` in descending order (most distinctive terms first)
-- Each row represents a unique term with its IDF weight and the number of documents containing it
-- Higher IDF weights indicate more distinctive/rare terms
-
-**document_index.csv** (from TF-IDF analysis)
-- Maps numeric document IDs to document filenames
-- Columns: `document_id`, `document`, `topic`, `subtopic`
-- Used to look up document names from IDs in tf_sparse.csv and term_documents.csv
-
-**term_index.csv** (from TF-IDF analysis)
-- Maps numeric term IDs to terms
-- Columns: `term_id`, `term`, `idf_weight`, `collection_frequency`
-- Sorted by `idf_weight` in descending order (same order as idf.csv)
-- Used to look up term names from IDs in tf_sparse.csv
-
-**term_documents.csv** (from TF-IDF analysis)
-- Inverted index showing which documents contain each term
-- Columns: `term_id`, `term`, `document_ids`
-- The `document_ids` column contains a semicolon-separated list of document IDs
-- Useful for finding all documents containing a specific term
-- Example: For term "fruits", document_ids might be "0;1;2;3;4;5;6;7;8"
-
-**tfidf_vectors.csv** (from TF-IDF vector store)
-- Contains normalized TF-IDF vectors for each document
-- Columns: `filename`, `topic`, `subtopic`, `term_0`, `term_1`, ..., `term_N`
-- Each term column corresponds to a term ID from term_index.csv
-- Vector values are normalized to unit length using L2 normalization (magnitude = 1.0)
-- Can be used for similarity analysis and comparison with transformer embeddings
-- Example: 25 documents × 1265 term dimensions (sparse vectors with many zeros)
-
-
-See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed examples and usage patterns for these CSV files.
-
-## GitHub Workflows
-
-The repository includes four GitHub Actions workflows:
-
-### CI Workflow (`.github/workflows/ci.yml`)
-
-The CI workflow runs on all pushes and pull requests and includes:
-
-1. **Linting**: Runs ESLint to check code quality
-2. **Security Check** (PR only): 
-   - Detects when dependencies are added or updated in pull requests
-   - Automatically triggered for Dependabot PRs or any PR that modifies `package.json`/`package-lock.json`
-   - Runs security audit using npm audit (GitHub Advisory Database)
-   - Posts a comment on the PR with security findings and risk assessment
-3. **Conditional Similarity Analysis** (PR only):
-   - Only runs when PR modifies `similarity.js` or `.github/workflows/text-similarity.yml`
-   - Ensures the similarity script still works correctly after changes
-   - Uploads the output CSV files as workflow artifacts with 90-day retention
-
-### Text Similarity Workflow (`.github/workflows/text-similarity.yml`)
-
-The text similarity workflow automatically runs the similarity analysis when:
-- Relevant files are modified (`similarity.js`, workflow file, `test_corpus/**`, `package.json`)
-- Manually triggered (workflow_dispatch)
-
-The workflow:
-- Installs dependencies
-- Runs the text similarity analysis script
-- Generates embeddings and similarity results
-- Uploads the output CSV files (`embeddings.csv` and `similarity_results.csv`) as workflow artifacts with 90-day retention
-
-### TF-IDF Workflow (`.github/workflows/tfidf.yml`)
-
-The TF-IDF workflow automatically runs the TF-IDF analysis using tiny-tfidf when:
-- Relevant files are modified (`tfidf.js`, workflow file, `test_corpus/**`, `package.json`)
-- Manually triggered (workflow_dispatch)
-
-The workflow:
-- Installs dependencies (including tiny-tfidf)
-- Runs the TF-IDF analysis script
-- Computes term frequency (TF) and inverse document frequency (IDF) for the corpus
-- Uploads the output CSV files (`tf.csv`, `tf_sparse.csv`, `idf.csv`, `document_index.csv`, `term_index.csv`, and `term_documents.csv`) as workflow artifacts with 90-day retention
-
-### TF-IDF Vector Store Workflow (`.github/workflows/tfidf-vectors.yml`)
-
-The TF-IDF vector store workflow builds normalized TF-IDF vectors and a LocalIndex when:
-- TF-IDF data is modified (`tfidf-data/**`)
-- The tfidf-vectors.js script is modified
-- The workflow file itself is modified
-- Manually triggered (workflow_dispatch)
-
-The workflow:
-- Installs dependencies
-- Runs the TF-IDF vector store builder
-- Creates normalized TF-IDF vectors from the TF-IDF data
-- Builds a LocalIndex for similarity queries
-- Uploads the vector store (`tfidf-vector-index/`) and normalized vectors CSV (`tfidf_vectors.csv`) as workflow artifacts with 90-day retention
-
-**Accessing Workflow Artifacts**: After the workflow runs, you can download the generated CSV files from the workflow run page under the "Artifacts" section.
-
-## Project Structure
-
-```
-.
-├── test_corpus/           # Test documents organized by topic
-│   ├── llm_01.md         # LLM documents
-│   ├── math_01.md        # Math documents
-│   └── fruit_01.md       # Fruit documents
-├── tfidf-data/           # TF-IDF analysis outputs
-├── corpus_index.md        # Table of all documents
-├── similarity.js          # Main similarity analysis script
-├── tfidf.js              # TF-IDF analysis script
-├── tfidf-vectors.js      # TF-IDF vector store builder
-├── package.json          # Node.js dependencies
-└── .github/
-    └── workflows/
-        ├── ci.yml             # CI workflow (linting, security, conditional checks)
-        ├── text-similarity.yml  # Text similarity analysis workflow
-        ├── tfidf.yml            # TF-IDF analysis workflow
-        └── tfidf-vectors.yml    # TF-IDF vector store workflow
-```
+**Perfect for**: Learning about text similarity, comparing NLP approaches, experimenting with embeddings, or building semantic search systems.
 
 ## Requirements
 
 - Node.js 20 or higher
 - npm
 
+## Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Run transformer-based similarity analysis
+npm run similarity
+
+# Run TF-IDF analysis
+npm run tfidf
+
+# Build TF-IDF vector store
+npm run tfidf-vectors
+```
+
+## Test Corpus
+
+The repository includes 25 sample documents (max 400 words each) organized into three topics:
+
+- **LLM** (8 documents): Large Language Models - architecture, prompting, tokenization, RAG, evaluation, etc.
+- **Math** (8 documents): Linear algebra, calculus, probability, number theory, graph theory, etc.
+- **Fruit** (9 documents): Citrus, berries, tropical fruits, stone fruits, apples, melons, grapes, etc.
+
+See [corpus_index.md](corpus_index.md) for the complete document list.
+
+## Features & Functionality
+
+### 1. Transformer-Based Similarity Analysis
+
+Uses modern deep learning to detect semantic similarity between documents.
+
+**How it works:**
+- Loads the [bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5) model (768-dimensional embeddings with 8-bit quantization)
+- Generates [sentence embeddings](https://www.geeksforgeeks.org/nlp/what-is-text-embedding/) for each document
+- Computes [cosine similarity](https://www.freecodecamp.org/news/how-does-cosine-similarity-work/) between document pairs
+- Stores vectors in a local index using [Vectra](https://github.com/Stevenic/vectra)
+
+**Technology:**
+- [Transformer.js](https://huggingface.co/docs/transformers.js/index) - Run transformer models in Node.js without a backend
+- BGE model - State-of-the-art sentence embeddings from BAAI
+- Cosine similarity - Direction-based similarity metric ideal for embeddings
+
+**Run:** `npm run similarity`
+
+**Outputs:**
+- Console analysis with top similar pairs and topic-based statistics
+- `embeddings.csv` - Document embeddings (filename, topic, subtopic, dim_0...dim_767)
+- `similarity_results.csv` - All document pair similarities with scores
+
+### 2. Classical TF-IDF Analysis
+
+Uses traditional NLP to identify distinctive terms in each document.
+
+**How it works:**
+- Computes [TF-IDF scores](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) (Term Frequency-Inverse Document Frequency)
+- Applies Porter Stemmer for term normalization
+- Identifies distinctive terms that characterize each document
+- Generates sparse and dense matrix formats
+
+**Technology:**
+- tiny-tfidf - Minimal TF-IDF implementation
+- natural - Porter Stemmer for term normalization
+
+**Run:** `npm run tfidf`
+
+**Outputs (in `tfidf-data/`):**
+- `tf.csv` - Term frequency matrix (wide format)
+- `tf_sparse.csv` - Term frequency (sparse format for efficiency)
+- `idf.csv` - Inverse document frequency scores
+- `document_index.csv` - Document ID mappings
+- `term_index.csv` - Term ID mappings
+- `term_documents.csv` - Inverted index (term → documents)
+
+### 3. TF-IDF Vector Store
+
+Builds a queryable vector database from TF-IDF data.
+
+**How it works:**
+- Reads TF-IDF data from `tfidf-data/`
+- Creates normalized TF-IDF vectors for each document (L2 normalization)
+- Builds a LocalIndex for similarity queries
+- Enables comparison with transformer-based embeddings
+
+**Run:** `npm run tfidf-vectors`
+
+**Outputs:**
+- `tfidf-vector-index/` - LocalIndex for similarity search
+- `tfidf_vectors.csv` - Normalized TF-IDF vectors
+
+### 4. Split Workflow: Embeddings + Similarity
+
+The repository also supports a two-step workflow for larger projects:
+
+**Step 1:** `npm run embeddings` - Computes and stores embeddings in `vector-index/`  
+**Step 2:** `npm run similarity-analysis` - Analyzes pre-computed embeddings
+
+This separation is useful when embeddings are expensive to compute and you want to run multiple analyses.
+
+## Output Files
+
+All scripts generate CSV files for further analysis in Jupyter, Pandas, Excel, or other tools. See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed usage examples.
+
+### Transformer Analysis Outputs
+
+| File | Description | Format |
+|------|-------------|--------|
+| `embeddings.csv` | Document embeddings with metadata | `filename, topic, subtopic, dim_0...dim_767` |
+| `similarity_results.csv` | Pairwise document similarity scores | `doc1, doc2, score, same_topic` |
+
+### TF-IDF Analysis Outputs
+
+| File | Description | Format |
+|------|-------------|--------|
+| `tf.csv` | Term frequency matrix | Documents × Terms (wide format) |
+| `tf_sparse.csv` | Term frequency (sparse) | `document_id, term_id, frequency` |
+| `idf.csv` | IDF scores for all terms | `term, idf_weight, collection_frequency` |
+| `document_index.csv` | Document ID mappings | `document_id, filename, topic, subtopic` |
+| `term_index.csv` | Term ID mappings | `term_id, term, idf_weight` |
+| `term_documents.csv` | Inverted index | `term_id, term, document_ids` |
+
+### TF-IDF Vector Store Outputs
+
+| File | Description | Format |
+|------|-------------|--------|
+| `tfidf_vectors.csv` | Normalized TF-IDF vectors | `filename, topic, subtopic, term_0...term_N` |
+
+## GitHub Actions Workflows
+
+The repository includes automated workflows for continuous analysis and quality assurance:
+
+### CI Workflow (`000 CI`)
+
+Runs on every push and pull request:
+- **Linting**: ESLint code quality checks
+- **Security Audit** (PR only): Detects dependency vulnerabilities when `package.json` changes
+- **Conditional Testing** (PR only): Runs similarity analysis when relevant files change
+
+### Preprocessing Workflows
+
+Run automatically on push to main branch:
+
+| Workflow | Name | Purpose |
+|----------|------|---------|
+| `embeddings-vectors.yml` | `010 PREPROC / embeddings-vectors` | Computes and commits embeddings to `vector-index/` |
+| `corpus-similarity-analysis.yml` | `011 PREPROC / Corpus Similarity Analysis` | Analyzes pre-computed embeddings |
+| `tfidf.yml` | `TF-IDF Analysis` | Generates TF-IDF data files |
+| `tfidf-vectors.yml` | `013 PREPROC / TF-IDF Vector Store` | Builds TF-IDF vector index |
+
+### Manual Workflow
+
+| Workflow | Name | Purpose |
+|----------|------|---------|
+| `text-similarity.yml` | `020 Helper / Manual Text Similarity Analysis` | One-shot embedding + similarity analysis (workflow_dispatch only) |
+
+**Accessing Results**: Download generated CSV files from the "Artifacts" section of workflow runs (90-day retention).
+
+## Project Structure
+
+```
+.
+├── test_corpus/              # 25 test documents (LLM, Math, Fruit topics)
+├── tfidf-data/              # TF-IDF analysis outputs (CSV files)
+├── vector-index/            # Transformer embeddings LocalIndex
+├── tfidf-vector-index/      # TF-IDF vectors LocalIndex
+├── corpus_index.md          # Document catalog with topics/subtopics
+├── similarity.js            # Main: embeddings + similarity (one-shot)
+├── embeddings.js            # Step 1: compute embeddings only
+├── similarity-analysis.js   # Step 2: analyze pre-computed embeddings
+├── tfidf.js                 # TF-IDF analysis script
+├── tfidf-vectors.js         # TF-IDF vector store builder
+├── package.json             # Dependencies and npm scripts
+└── .github/workflows/       # CI and automation workflows
+```
+
+## Learning Resources
+
+Want to learn more about the techniques used?
+
+- **Text Embeddings**: [What is Text Embedding?](https://www.geeksforgeeks.org/nlp/what-is-text-embedding/) - Introduction to vector representations of text
+- **TF-IDF**: [Understanding TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) - Classical term weighting for information retrieval
+- **Cosine Similarity**: [How Does Cosine Similarity Work?](https://www.freecodecamp.org/news/how-does-cosine-similarity-work/) - Mathematical explanation for comparing vectors
+- **Transformer.js**: [Official Documentation](https://huggingface.co/docs/transformers.js/index) - Run transformer models in JavaScript
+- **BGE Model**: [bge-base-en-v1.5](https://huggingface.co/BAAI/bge-base-en-v1.5) - State-of-the-art sentence embeddings from BAAI
+- **Vectra**: [GitHub Repository](https://github.com/Stevenic/vectra) - Local vector database for Node.js
+
 ## Contributing
 
-This project uses the following labels to categorize issues and pull requests:
+This project uses labels to categorize issues and PRs:
 
-- **bug** - Something isn't working correctly
-- **enhancement** - New feature or improvement request
-- **documentation** - Improvements or additions to documentation
-- **good first issue** - Good for newcomers to the project
-- **help wanted** - Extra attention is needed
-- **question** - Further information is requested
-- **dependencies** - Updates to project dependencies
+- **bug** - Something isn't working
+- **enhancement** - New features or improvements  
+- **documentation** - Documentation updates
+- **good first issue** - Good for newcomers
+- **help wanted** - Extra attention needed
+- **question** - Further information requested
+- **dependencies** - Dependency updates
 
 ## License
 

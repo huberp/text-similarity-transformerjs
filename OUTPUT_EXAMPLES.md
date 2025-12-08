@@ -19,7 +19,7 @@ fruit_01.md,Fruit,Citrus,0.345678,-0.456789,0.567890,...,0.678901
 - `filename`: The name of the document file
 - `topic`: The main topic category (LLM, Math, or Fruit)
 - `subtopic`: The specific subtopic within the category
-- `dim_0` through `dim_N`: The embedding vector dimensions (typically 384 dimensions for the all-MiniLM-L6-v2 model)
+- `dim_0` through `dim_767`: The embedding vector dimensions (768 dimensions for the bge-base-en-v1.5 model)
 
 **Usage:**
 This file can be loaded into Jupyter notebooks or Pandas DataFrames for further analysis:
