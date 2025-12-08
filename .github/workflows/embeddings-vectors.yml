@@ -1,4 +1,4 @@
-name: 000 PREPPROC / embeddings-vectors
+name: 010 PREPROC / embeddings-vectors
 
 on:
   push:
