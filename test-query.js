@@ -29,7 +29,7 @@ async function testTFIDFQuery() {
   }
   
   for (const sentence of testSentences) {
-    console.log('\n' + '-'.repeat(80));
+    console.log(`\n${'-'.repeat(80)}`);
     console.log(`Query: "${sentence}"`);
     console.log('-'.repeat(80));
     
@@ -62,7 +62,7 @@ async function testTFIDFQuery() {
     }
   }
   
-  console.log('\n' + '='.repeat(80));
+  console.log(`\n${'='.repeat(80)}`);
   console.log('TEST COMPLETE');
   console.log('='.repeat(80));
 }
