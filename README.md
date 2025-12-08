@@ -24,14 +24,16 @@ This project helps you understand how different NLP techniques detect semantic s
 # Install dependencies
 npm install
 
-# Run transformer-based similarity analysis
-npm run similarity
+# Build the vector stores (required for query tool)
+npm run tfidf                # Generate TF-IDF data
+npm run tfidf-vectors        # Build TF-IDF vector store
+npm run embeddings           # Build embedding vector store (optional - requires network)
 
-# Run TF-IDF analysis
-npm run tfidf
+# Interactive Query Tool (recommended for exploring the corpus)
+npm run query
 
-# Build TF-IDF vector store
-npm run tfidf-vectors
+# Or run individual analyses
+npm run similarity           # Run transformer-based similarity analysis
 ```
 
 ## Test Corpus
@@ -46,7 +48,35 @@ See [corpus_index.md](corpus_index.md) for the complete document list.
 
 ## Features & Functionality
 
-### 1. Transformer-Based Similarity Analysis
+### 1. Interactive Query Tool
+
+**NEW!** Search for similar documents using your own sentences.
+
+**How it works:**
+- Enter any sentence interactively
+- The tool automatically:
+  1. Computes transformer-based embedding and searches the embedding vector store
+  2. Stems the sentence, creates a TF-IDF vector, and searches the TF-IDF vector store
+- Compare results from both approaches side-by-side
+- Shows found terms, weights, and top matching documents
+
+**Technology:**
+- Reusable library functions for embeddings, stemming, and TF-IDF vector creation
+- LocalIndex queries for both vector stores
+
+**Run:** `npm run query`
+
+**Requirements:**
+- Run `npm run embeddings` first to create the embedding vector store
+- Run `npm run tfidf` and `npm run tfidf-vectors` to create the TF-IDF vector store
+
+**Example queries:**
+- "What are the properties of matrices in linear algebra?"
+- "How do I calculate derivatives and integrals?"
+- "Tell me about citrus fruits like oranges and lemons"
+- "What is a large language model and how does it work?"
+
+### 2. Transformer-Based Similarity Analysis
 
 Uses modern deep learning to detect semantic similarity between documents.
 
@@ -68,7 +98,7 @@ Uses modern deep learning to detect semantic similarity between documents.
 - `embeddings.csv` - Document embeddings (filename, topic, subtopic, dim_0...dim_767)
 - `similarity_results.csv` - All document pair similarities with scores
 
-### 2. Classical TF-IDF Analysis
+### 3. Classical TF-IDF Analysis
 
 Uses traditional NLP to identify distinctive terms in each document.
 
@@ -92,7 +122,7 @@ Uses traditional NLP to identify distinctive terms in each document.
 - `term_index.csv` - Term ID mappings
 - `term_documents.csv` - Inverted index (term → documents)
 
-### 3. TF-IDF Vector Store
+### 4. TF-IDF Vector Store
 
 Builds a queryable vector database from TF-IDF data.
 
@@ -108,7 +138,7 @@ Builds a queryable vector database from TF-IDF data.
 - `tfidf-vector-index/` - LocalIndex for similarity search
 - `tfidf_vectors.csv` - Normalized TF-IDF vectors
 
-### 4. Split Workflow: Embeddings + Similarity
+### 5. Split Workflow: Embeddings + Similarity
 
 The repository also supports a two-step workflow for larger projects:
 
@@ -200,11 +230,18 @@ These workflows download intermediate data from releases and perform analysis:
 
 ```
 .
-├── test_corpus/              # 25 test documents (LLM, Math, Fruit topics)
+├── lib/                     # Shared library functions
+│   ├── corpus-loader.js     # Corpus document reading utilities
+│   ├── csv-utils.js         # CSV formatting helpers
+│   ├── embeddings.js        # Embedding model and computation
+│   ├── stemming.js          # Text stemming with Porter Stemmer
+│   └── tfidf-vector.js      # TF-IDF vector creation
+├── test_corpus/             # 25 test documents (LLM, Math, Fruit topics)
 ├── tfidf-data/              # TF-IDF analysis outputs (generated locally, not in repo)
 ├── vector-index/            # Transformer embeddings LocalIndex (generated locally, not in repo)
 ├── tfidf-vector-index/      # TF-IDF vectors LocalIndex (generated locally)
 ├── corpus_index.md          # Document catalog with topics/subtopics
+├── query.js                 # Interactive query tool (NEW!)
 ├── similarity.js            # Main: embeddings + similarity (one-shot)
 ├── embeddings.js            # Step 1: compute embeddings only
 ├── similarity-analysis.js   # Step 2: analyze pre-computed embeddings
