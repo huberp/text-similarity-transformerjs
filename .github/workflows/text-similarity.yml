@@ -1,4 +1,8 @@
 name: Text Similarity Analysis
+# NOTE: This workflow computes embeddings and similarity in one go.
+# For split workflows, see:
+# - embeddings-vectors.yml (computes embeddings, commits LocalIndex)
+# - corpus-similarity-analysis.yml (uses pre-computed embeddings)
 
 on:
   push:

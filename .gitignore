@@ -23,9 +23,6 @@ Thumbs.db
 .cache/
 models/
 
-# Vectra vector index
-vector-index/
-
 # Output files
 embeddings.csv
 similarity_results.csv

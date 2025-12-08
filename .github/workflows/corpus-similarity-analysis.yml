@@ -1,0 +1,112 @@
+name: 000 PREPOC / Corpus Similarity Analysis
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'test_corpus/**'
+      - 'similarity-analysis.js'
+      - '.github/workflows/corpus-similarity-analysis.yml'
+      - 'package.json'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'test_corpus/**'
+      - 'similarity-analysis.js'
+      - '.github/workflows/corpus-similarity-analysis.yml'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  check-index:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      actions: write
+    
+    outputs:
+      index_exists: ${{ steps.check.outputs.index_exists }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      
+    - name: Check if LocalIndex exists
+      id: check
+      run: |
+        if [ -d "vector-index" ] && [ -f "vector-index/index.json" ]; then
+          echo "index_exists=true" >> $GITHUB_OUTPUT
+          echo "LocalIndex found"
+        else
+          echo "index_exists=false" >> $GITHUB_OUTPUT
+          echo "LocalIndex not found"
+        fi
+  
+  trigger-embeddings:
+    needs: check-index
+    runs-on: ubuntu-latest
+    if: needs.check-index.outputs.index_exists == 'false'
+    
+    permissions:
+      actions: write
+    
+    steps:
+    - name: Trigger embeddings workflow
+      uses: actions/github-script@v7
+      with:
+        script: |
+          console.log('LocalIndex does not exist, triggering embeddings workflow...');
+          await github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'embeddings-vectors.yml',
+            ref: context.ref
+          });
+          console.log('Embeddings workflow triggered successfully');
+          
+    - name: Wait for embeddings workflow
+      run: |
+        echo "=========================================="
+        echo "LocalIndex does not exist!"
+        echo "=========================================="
+        echo ""
+        echo "The embeddings workflow has been triggered automatically."
+        echo "This workflow will fail now, but you can:"
+        echo "  1. Wait for the embeddings workflow to complete and commit the LocalIndex"
+        echo "  2. Re-run this workflow after the LocalIndex is available"
+        echo ""
+        echo "Alternatively, run 'npm run embeddings' locally to generate the LocalIndex."
+        exit 1
+
+  similarity-analysis:
+    needs: check-index
+    runs-on: ubuntu-latest
+    if: needs.check-index.outputs.index_exists == 'true'
+    
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run corpus similarity analysis
+      run: npm run similarity-analysis
+      
+    - name: Upload similarity analysis outputs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: similarity-analysis-outputs
+        path: |
+          similarity_results.csv
+        retention-days: 90
