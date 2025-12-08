@@ -5,20 +5,6 @@ name: Text Similarity Analysis
 # - corpus-similarity-analysis.yml (uses pre-computed embeddings)
 
 on:
-  push:
-    branches: [ main, master ]
-    paths:
-      - 'similarity.js'
-      - '.github/workflows/text-similarity.yml'
-      - 'test_corpus/**'
-      - 'package.json'
-  pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'similarity.js'
-      - '.github/workflows/text-similarity.yml'
-      - 'test_corpus/**'
-      - 'package.json'
   workflow_dispatch:
 
 jobs:
