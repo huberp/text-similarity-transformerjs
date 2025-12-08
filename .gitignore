@@ -23,12 +23,12 @@ Thumbs.db
 .cache/
 models/
 
-# Output files
-embeddings.csv
-similarity_results.csv
-tf.csv
-tf_sparse.csv
-idf.csv
-document_index.csv
-term_index.csv
-term_documents.csv
+# Output files (root level only)
+/embeddings.csv
+/similarity_results.csv
+/tf.csv
+/tf_sparse.csv
+/idf.csv
+/document_index.csv
+/term_index.csv
+/term_documents.csv
