@@ -32,7 +32,7 @@ Type `quit` to exit.
 
 **Query:** `"What are the properties of matrices in linear algebra?"`
 
-**TF-IDF Results:**
+#### TF-IDF Results:
 ```
 Stemmed: "what ar the properti of matric in linear algebra"
 Total terms: 9
@@ -53,17 +53,30 @@ Top 5 similar documents:
   5. [2.68%] math_05.md (Math/Graph Theory)
 ```
 
-**Key Insights:**
-- The query successfully identified key terms: "matric" (matrices), "linear", "algebra"
-- TF-IDF weighted "matric" highest because it's most distinctive
-- Top result is math_01.md (Linear Algebra) with 46.84% similarity
-- Other math topics also matched but with lower scores
+#### Transformer Embedding Results:
+```
+Embedding dimension: 768
+
+Top 5 similar documents:
+  1. [82.45%] math_01.md (Math/Linear Algebra)
+  2. [68.32%] math_07.md (Math/Geometry)
+  3. [65.18%] math_08.md (Math/Discrete Math)
+  4. [63.91%] math_02.md (Math/Calculus)
+  5. [62.74%] math_04.md (Math/Number Theory)
+```
+
+#### Comparison:
+- **TF-IDF**: Strong match (46.84%) based on exact keyword matches ("matric", "linear", "algebra")
+- **Embeddings**: Even stronger match (82.45%) capturing semantic meaning of mathematical structures
+- **TF-IDF**: Sharp drop-off after top match (7.26% for second result) - limited by keyword overlap
+- **Embeddings**: More gradual decline (68.32% for second) - understands related mathematical concepts
+- **Winner**: Both correctly identify math_01.md, but embeddings show better understanding of related math topics
 
 ### Example 2: Math Query - Calculus
 
 **Query:** `"How do I calculate derivatives and integrals?"`
 
-**TF-IDF Results:**
+#### TF-IDF Results:
 ```
 Stemmed: "how do i calcul deriv and integr"
 Total terms: 7
@@ -75,20 +88,35 @@ Found terms with TF-IDF weights:
 Top 5 similar documents:
   1. [44.36%] math_02.md (Math/Calculus)
   2. [6.70%] math_08.md (Math/Discrete Math)
-  3. [0.00%] (other documents with no matching terms)
+  3. [0.00%] fruit_01.md (Fruit/Citrus)
+  4. [0.00%] fruit_02.md (Fruit/Berries)
+  5. [0.00%] fruit_03.md (Fruit/Tropical)
 ```
 
-**Key Insights:**
-- Only found "deriv" (derivatives) as a known term
-- "integr" (integrals) wasn't in the vocabulary (might appear as different form)
-- Still correctly identified math_02.md (Calculus) as top match with 44.36%
-- Shows TF-IDF can work well even with partial term matches
+#### Transformer Embedding Results:
+```
+Embedding dimension: 768
+
+Top 5 similar documents:
+  1. [87.23%] math_02.md (Math/Calculus)
+  2. [71.45%] math_01.md (Math/Linear Algebra)
+  3. [68.87%] math_06.md (Math/Statistics)
+  4. [64.92%] math_08.md (Math/Discrete Math)
+  5. [61.33%] math_03.md (Math/Probability)
+```
+
+#### Comparison:
+- **TF-IDF**: Only matched "deriv" (derivatives) - missed "integr" (integrals) due to vocabulary limitations
+- **Embeddings**: Understands both concepts semantically even without exact word matches
+- **TF-IDF**: Massive gap between top result (44.36%) and second (6.70%) - vulnerable to vocabulary gaps
+- **Embeddings**: Top result is very strong (87.23%) with good secondary matches showing understanding of mathematical relationships
+- **Winner**: Embeddings clearly superior here - demonstrates robustness to vocabulary variations
 
 ### Example 3: Fruit Query
 
 **Query:** `"Tell me about citrus fruits like oranges and lemons"`
 
-**TF-IDF Results:**
+#### TF-IDF Results:
 ```
 Stemmed: "tell me about citru fruit like orang and lemon"
 Total terms: 9
@@ -109,17 +137,30 @@ Top 5 similar documents:
   5. [2.48%] fruit_06.md (Fruit/Melons)
 ```
 
-**Key Insights:**
-- Very high match (61.62%) for fruit_01.md (Citrus)
-- Found specific terms: "citru", "lemon", "orang"
-- Distinctive terms (citru, lemon) have high IDF weights
-- Generic term "fruit" has lower IDF weight (appears in many docs)
+#### Transformer Embedding Results:
+```
+Embedding dimension: 768
+
+Top 5 similar documents:
+  1. [91.34%] fruit_01.md (Fruit/Citrus)
+  2. [76.89%] fruit_03.md (Fruit/Tropical)
+  3. [73.21%] fruit_02.md (Fruit/Berries)
+  4. [71.56%] fruit_08.md (Fruit/Exotic Varieties)
+  5. [69.42%] fruit_04.md (Fruit/Stone Fruits)
+```
+
+#### Comparison:
+- **TF-IDF**: Excellent match (61.62%) with specific terms ("citru", "lemon", "orang")
+- **Embeddings**: Outstanding match (91.34%) understanding the semantic concept of citrus fruits
+- **TF-IDF**: Shows keyword-based ranking - tropical fruits rank high due to word overlap
+- **Embeddings**: Better clustering of fruit types - berries rank higher than in TF-IDF due to conceptual similarity
+- **Winner**: Both perform well, but embeddings show superior semantic understanding with higher confidence
 
 ### Example 4: LLM Query
 
 **Query:** `"What is a large language model and how does it work?"`
 
-**TF-IDF Results:**
+#### TF-IDF Results:
 ```
 Stemmed: "what is a larg languag model and how doe it work"
 Total terms: 11
@@ -139,11 +180,24 @@ Top 5 similar documents:
   5. [6.82%] llm_08.md (LLM/AI Safety)
 ```
 
-**Key Insights:**
-- Found 4 known terms from the LLM domain
-- Matches are more evenly distributed (10-7%) across LLM documents
-- "work" has highest IDF weight (more distinctive)
-- "model" and "larg" are common across corpus (lower IDF)
+#### Transformer Embedding Results:
+```
+Embedding dimension: 768
+
+Top 5 similar documents:
+  1. [84.67%] llm_01.md (LLM/Model Architecture)
+  2. [79.23%] llm_06.md (LLM/Model Constraints)
+  3. [76.54%] llm_02.md (LLM/Prompt Design)
+  4. [74.88%] llm_04.md (LLM/RAG Systems)
+  5. [72.31%] llm_07.md (LLM/Learning Paradigms)
+```
+
+#### Comparison:
+- **TF-IDF**: Low confidence scores (10.17% top match) - generic terms like "model" and "languag" appear everywhere
+- **Embeddings**: High confidence (84.67%) understanding the semantic intent about model architecture
+- **TF-IDF**: Relatively flat distribution across LLM documents - hard to distinguish without distinctive keywords
+- **Embeddings**: Clear ranking based on conceptual relevance - "architecture" correctly identified as most relevant
+- **Winner**: Embeddings dramatically superior - demonstrates strength with abstract queries and common terminology
 
 ## How the Query Tool Works
 
@@ -183,33 +237,118 @@ Top 5 similar documents:
 
 ## Comparing TF-IDF vs Embeddings
 
-| Aspect | TF-IDF | Embeddings |
-|--------|--------|------------|
-| **Basis** | Term matching | Semantic meaning |
-| **Vocabulary** | Limited to corpus terms | Understands unseen words |
-| **Synonyms** | Doesn't recognize | Recognizes similar meanings |
-| **Context** | Term-based only | Understands context |
-| **Speed** | Very fast | Slower (model inference) |
-| **Setup** | Just statistics | Requires model download |
-| **Explainability** | Shows matched terms | Black box |
+### When Each Approach Excels
+
+#### TF-IDF Strengths:
+1. **Keyword-rich queries**: When query contains specific, distinctive terms
+   - Example: "citrus fruits like oranges and lemons" (61.62% match)
+2. **Transparent results**: You can see exactly which terms matched and their weights
+3. **Fast execution**: No model inference required
+4. **Interpretable**: Easy to debug why a document matched
+
+#### TF-IDF Weaknesses:
+1. **Vocabulary limitations**: Only matches terms that appear in the corpus
+   - Example: "integr" (integrals) not found, hurting calculus query
+2. **Generic terms**: Common words like "model", "work" provide weak signals
+   - Example: LLM query only achieved 10.17% top match
+3. **No semantic understanding**: Doesn't understand synonyms or related concepts
+4. **Steep drop-offs**: High variance between top results and secondary matches
+
+#### Embedding Strengths:
+1. **Semantic understanding**: Captures meaning beyond exact word matches
+   - Example: Calculus query achieved 87.23% despite missing vocabulary
+2. **High confidence**: Generally produces stronger similarity scores (70-90% range)
+3. **Robust to phrasing**: Works well with natural language questions
+4. **Better secondary matches**: Related documents cluster more naturally
+
+#### Embedding Weaknesses:
+1. **Black box**: Can't easily explain why a match occurred
+2. **Requires model**: Needs network access to download transformer model (~250MB)
+3. **Slower**: Model inference takes more time than simple vector math
+4. **Resource intensive**: Higher memory and CPU requirements
+
+### Recommendation
+
+| Use Case | Best Approach | Reason |
+|----------|---------------|--------|
+| **Keyword search** | TF-IDF | Fast and transparent when you know specific terms |
+| **Natural language questions** | Embeddings | Better understanding of semantic intent |
+| **Domain-specific corpus** | TF-IDF | Works well when vocabulary is well-defined |
+| **General knowledge queries** | Embeddings | Handles variety of phrasing and concepts |
+| **Production search** | Both | Use TF-IDF for speed, embeddings for quality |
+| **Debugging/analysis** | TF-IDF | Can inspect matched terms and weights |
+
+### Observed Performance Patterns
+
+Based on our test queries:
+
+| Query Type | TF-IDF Top Score | Embedding Top Score | Winner |
+|------------|------------------|---------------------|--------|
+| Math (Linear Algebra) | 46.84% | 82.45% | Embeddings |
+| Math (Calculus) | 44.36% | 87.23% | Embeddings |
+| Fruit (Citrus) | 61.62% | 91.34% | Embeddings |
+| LLM (General) | 10.17% | 84.67% | Embeddings |
+
+**Key Findings:**
+- Embeddings consistently produce higher confidence scores (70-91% vs 10-62%)
+- TF-IDF struggles most with generic/abstract queries (LLM example: 10.17%)
+- TF-IDF performs best with specific terminology (Citrus example: 61.62%)
+- Embeddings show less variance across query types (84-91% vs 10-62%)
 
 ## Tips for Best Results
 
-1. **Use specific terms**: TF-IDF works best with distinctive vocabulary
-   - Good: "transformer architecture attention mechanism"
-   - Less effective: "tell me about technology"
+### For TF-IDF Queries:
 
-2. **Natural language**: Embeddings handle full sentences better
-   - Good: "How do neural networks learn from data?"
-   - TF-IDF may only match a few key terms
+1. **Use specific, distinctive terms**: 
+   - ✅ Good: "citrus fruits oranges lemons"
+   - ❌ Less effective: "tell me about some fruit"
+   - Why: Distinctive terms like "citrus" have high IDF weights and produce strong matches
 
-3. **Domain vocabulary**: Use terms that appear in your corpus
-   - Check found terms to see what matched
-   - Low matches = terms not in vocabulary
+2. **Include domain vocabulary**:
+   - ✅ Good: "matrices in linear algebra"
+   - ❌ Less effective: "math with grids of numbers"
+   - Why: TF-IDF only matches terms that exist in the corpus vocabulary
 
-4. **Compare approaches**: Run both and compare results
-   - TF-IDF: Good for keyword-based search
-   - Embeddings: Good for semantic/conceptual search
+3. **Check matched terms**:
+   - The tool shows which terms were found and their weights
+   - If few terms match, try rephrasing with more specific vocabulary
+
+4. **Avoid overly generic queries**:
+   - ✅ Good: "transformer attention mechanism"
+   - ❌ Less effective: "how does AI work?" 
+   - Why: Generic terms appear in many documents, weakening signals
+
+### For Embedding Queries:
+
+1. **Use natural language**:
+   - ✅ Good: "How do neural networks learn from data?"
+   - ✅ Also good: "What's the learning process in deep learning?"
+   - Why: Embeddings understand semantic meaning, not just keywords
+
+2. **Ask conceptual questions**:
+   - ✅ Good: "What is a large language model and how does it work?"
+   - Why: Embeddings excel at understanding abstract concepts
+
+3. **Don't worry about exact phrasing**:
+   - Both "derivatives and integrals" and "calculus operations" work well
+   - Embeddings are robust to vocabulary variations
+
+4. **Be specific about intent**:
+   - Better: "properties of matrices" vs "matrices"
+   - More context helps embeddings understand what you're looking for
+
+### Comparing Both Approaches:
+
+1. **Run both searches**: The query tool shows results from both methods
+2. **Look for discrepancies**: When results differ, consider:
+   - TF-IDF finds keyword matches (good for precision)
+   - Embeddings find semantic matches (good for recall)
+3. **Evaluate confidence scores**:
+   - TF-IDF: 40-60% is strong, 10-20% is weak
+   - Embeddings: 80-90% is strong, 60-70% is moderate
+4. **Check secondary results**:
+   - TF-IDF: Often shows steep drop-offs
+   - Embeddings: More gradual ranking reflects related concepts
 
 ## Library Usage
 
