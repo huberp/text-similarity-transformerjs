@@ -10,7 +10,8 @@
     "similarity": "node similarity.js",
     "tfidf": "node tfidf.js",
     "tfidf-vectors": "node tfidf-vectors.js",
-    "lint": "eslint *.js"
+    "query": "node query.js",
+    "lint": "eslint *.js lib/*.js"
   },
   "keywords": [
     "transformers",
