@@ -17,6 +17,10 @@ on:
       - 'package.json'
   workflow_dispatch:
 
+concurrency:
+  group: corpus-similarity-analysis-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-index:
     runs-on: ubuntu-latest
