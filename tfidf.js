@@ -1,10 +1,11 @@
 import { Corpus } from 'tiny-tfidf';
-import { readFileSync, readdirSync, writeFileSync } from 'fs';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import natural from 'natural';
 
 // Constants for CSV formatting
 const IDF_DECIMAL_PLACES = 6;
+const OUTPUT_DIR = './tfidf-data';
 
 // Function to preprocess text with stemming
 function stemText(text) {
@@ -53,6 +54,15 @@ function computeTFIDF() {
   console.log('TF-IDF ANALYSIS');
   console.log('='.repeat(80));
   console.log();
+  
+  // Create output directory if it doesn't exist
+  try {
+    mkdirSync(OUTPUT_DIR, { recursive: true });
+    console.log(`Output directory: ${OUTPUT_DIR}\n`);
+  } catch (error) {
+    console.error(`Error creating output directory: ${error.message}`);
+    throw error;
+  }
   
   // Read all markdown files from test_corpus directory
   const corpusDir = './test_corpus';
@@ -137,8 +147,9 @@ function computeTFIDF() {
   
   // Write TF CSV file
   const tfContent = tfRows.join('\n');
-  writeFileSync('tf.csv', tfContent, 'utf-8');
-  console.log(`TF report exported to tf.csv (${documents.length} documents, ${allTerms.length} terms)\n`);
+  const tfPath = join(OUTPUT_DIR, 'tf.csv');
+  writeFileSync(tfPath, tfContent, 'utf-8');
+  console.log(`TF report exported to ${tfPath} (${documents.length} documents, ${allTerms.length} terms)\n`);
   
   // Export IDF (Inverse Document Frequency) scores to CSV
   console.log('Generating IDF (Inverse Document Frequency) CSV report...');
@@ -167,8 +178,9 @@ function computeTFIDF() {
   
   // Write IDF CSV file
   const idfContent = idfRows.join('\n');
-  writeFileSync('idf.csv', idfContent, 'utf-8');
-  console.log(`IDF report exported to idf.csv (${allTerms.length} terms, sorted by idf_weight)\n`);
+  const idfPath = join(OUTPUT_DIR, 'idf.csv');
+  writeFileSync(idfPath, idfContent, 'utf-8');
+  console.log(`IDF report exported to ${idfPath} (${allTerms.length} terms, sorted by idf_weight)\n`);
   
   // Export Document Index CSV
   console.log('Generating Document Index CSV...');
@@ -183,8 +195,9 @@ function computeTFIDF() {
   }
   
   const docIndexContent = docIndexRows.join('\n');
-  writeFileSync('document_index.csv', docIndexContent, 'utf-8');
-  console.log(`Document index exported to document_index.csv (${documents.length} documents)\n`);
+  const docIndexPath = join(OUTPUT_DIR, 'document_index.csv');
+  writeFileSync(docIndexPath, docIndexContent, 'utf-8');
+  console.log(`Document index exported to ${docIndexPath} (${documents.length} documents)\n`);
   
   // Export Term Index CSV (using sorted idfData order)
   console.log('Generating Term Index CSV...');
@@ -199,8 +212,9 @@ function computeTFIDF() {
   }
   
   const termIndexContent = termIndexRows.join('\n');
-  writeFileSync('term_index.csv', termIndexContent, 'utf-8');
-  console.log(`Term index exported to term_index.csv (${idfData.length} terms)\n`);
+  const termIndexPath = join(OUTPUT_DIR, 'term_index.csv');
+  writeFileSync(termIndexPath, termIndexContent, 'utf-8');
+  console.log(`Term index exported to ${termIndexPath} (${idfData.length} terms)\n`);
   
   // Export Term-Documents Inverted Index CSV
   console.log('Generating Term-Documents Inverted Index CSV...');
@@ -229,8 +243,9 @@ function computeTFIDF() {
   }
   
   const termDocsContent = termDocsRows.join('\n');
-  writeFileSync('term_documents.csv', termDocsContent, 'utf-8');
-  console.log(`Term-documents inverted index exported to term_documents.csv (${idfData.length} terms)\n`);
+  const termDocsPath = join(OUTPUT_DIR, 'term_documents.csv');
+  writeFileSync(termDocsPath, termDocsContent, 'utf-8');
+  console.log(`Term-documents inverted index exported to ${termDocsPath} (${idfData.length} terms)\n`);
   
   // Export TF in sparse format (document_id, term_id, frequency)
   console.log('Generating TF Sparse Format CSV...');
@@ -261,8 +276,9 @@ function computeTFIDF() {
   }
   
   const tfSparseContent = tfSparseRows.join('\n');
-  writeFileSync('tf_sparse.csv', tfSparseContent, 'utf-8');
-  console.log(`TF sparse format exported to tf_sparse.csv (more efficient for large corpora)\n`);
+  const tfSparsePath = join(OUTPUT_DIR, 'tf_sparse.csv');
+  writeFileSync(tfSparsePath, tfSparseContent, 'utf-8');
+  console.log(`TF sparse format exported to ${tfSparsePath} (more efficient for large corpora)\n`);
   
   // Display some statistics
   console.log('='.repeat(80));
@@ -286,7 +302,7 @@ function computeTFIDF() {
   console.log('='.repeat(80));
   console.log('Analysis complete!');
   console.log('='.repeat(80));
-  console.log('\nGenerated files:');
+  console.log('\nGenerated files in', OUTPUT_DIR + ':');
   console.log('  - tf.csv: Term frequency matrix (wide format, one row per document)');
   console.log('  - tf_sparse.csv: Term frequency in sparse format (document_id, term_id, frequency)');
   console.log('  - idf.csv: Inverse document frequency scores (sorted by idf_weight)');

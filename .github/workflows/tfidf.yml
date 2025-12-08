@@ -4,25 +4,20 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - 'tfidf.js'
-      - '.github/workflows/tfidf.yml'
       - 'test_corpus/**'
-      - 'package.json'
-  pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'tfidf.js'
       - '.github/workflows/tfidf.yml'
-      - 'test_corpus/**'
-      - 'package.json'
   workflow_dispatch:
+
+concurrency:
+  group: tfidf-analysis-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   tfidf-analysis:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: read
+      contents: write
     
     steps:
     - name: Checkout repository
@@ -39,16 +34,31 @@ jobs:
     - name: Run TF-IDF analysis
       run: npm run tfidf
       
+    - name: Check for changes in tfidf-data
+      id: check-changes
+      run: |
+        git add tfidf-data/
+        if git diff --cached --quiet; then
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "No changes in tfidf-data"
+        else
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "Changes detected in tfidf-data"
+        fi
+      
+    - name: Commit and push TF-IDF data
+      if: steps.check-changes.outputs.has_changes == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add tfidf-data/
+        git commit -m "Update TF-IDF data after corpus changes"
+        git push
+      
     - name: Upload TF-IDF analysis outputs
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: tfidf-outputs
-        path: |
-          tf.csv
-          tf_sparse.csv
-          idf.csv
-          document_index.csv
-          term_index.csv
-          term_documents.csv
+        path: tfidf-data/
         retention-days: 90
