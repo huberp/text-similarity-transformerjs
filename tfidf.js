@@ -56,13 +56,8 @@ function computeTFIDF() {
   console.log();
   
   // Create output directory if it doesn't exist
-  try {
-    mkdirSync(OUTPUT_DIR, { recursive: true });
-    console.log(`Output directory: ${OUTPUT_DIR}\n`);
-  } catch (error) {
-    console.error(`Error creating output directory: ${error.message}`);
-    throw error;
-  }
+  mkdirSync(OUTPUT_DIR, { recursive: true });
+  console.log(`Output directory: ${OUTPUT_DIR}\n`);
   
   // Read all markdown files from test_corpus directory
   const corpusDir = './test_corpus';
@@ -302,7 +297,7 @@ function computeTFIDF() {
   console.log('='.repeat(80));
   console.log('Analysis complete!');
   console.log('='.repeat(80));
-  console.log('\nGenerated files in', OUTPUT_DIR + ':');
+  console.log(`\nGenerated files in ${OUTPUT_DIR}:`);
   console.log('  - tf.csv: Term frequency matrix (wide format, one row per document)');
   console.log('  - tf_sparse.csv: Term frequency in sparse format (document_id, term_id, frequency)');
   console.log('  - idf.csv: Inverse document frequency scores (sorted by idf_weight)');
