@@ -1,4 +1,16 @@
 name: 020 Helper / Manual Text Similarity Analysis
+
+# ============================================================
+# Purpose: Compute embeddings and similarity analysis in one workflow for manual testing
+# Triggers: manual dispatch only
+# Permissions: contents:read
+# Inputs: Text files in test_corpus directory
+# Outputs: embeddings.csv and similarity_results.csv artifacts
+# Secrets: None
+# Variables: None
+# Preconditions: None
+# ============================================================
+
 # NOTE: This workflow computes embeddings and similarity in one go.
 # For split workflows, see:
 # - embeddings-vectors.yml (computes embeddings, commits LocalIndex)

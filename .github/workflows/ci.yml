@@ -1,5 +1,16 @@
 name: 000 CI
 
+# ============================================================
+# Purpose: Run security checks, linting, and conditional similarity analysis on push/PR
+# Triggers: push to main/master, pull requests, manual dispatch
+# Permissions: contents:read, pull-requests:write (security-check job)
+# Inputs: None
+# Outputs: Similarity analysis artifacts (embeddings.csv, similarity_results.csv) when triggered
+# Secrets: GITHUB_TOKEN (automatic)
+# Variables: None
+# Preconditions: None
+# ============================================================
+
 on:
   push:
     branches: [ main, master ]

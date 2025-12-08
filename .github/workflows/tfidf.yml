@@ -1,5 +1,16 @@
 name: 012 PREPROC / TF-IDF Analysis
 
+# ============================================================
+# Purpose: Run TF-IDF analysis on corpus and create intermediate data for vector store
+# Triggers: push to main/master (on corpus/workflow changes), manual dispatch
+# Permissions: contents:write
+# Inputs: Text files in test_corpus directory
+# Outputs: tfidf-data.zip in data-latest release, tfidf-data artifacts
+# Secrets: GITHUB_TOKEN (automatic)
+# Variables: None
+# Preconditions: None
+# ============================================================
+
 on:
   push:
     branches: [ main, master ]
