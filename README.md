@@ -24,17 +24,16 @@ This project helps you understand how different NLP techniques detect semantic s
 # Install dependencies
 npm install
 
+# Build the vector stores (required for query tool)
+npm run tfidf                # Generate TF-IDF data
+npm run tfidf-vectors        # Build TF-IDF vector store
+npm run embeddings           # Build embedding vector store (optional - requires network)
+
 # Interactive Query Tool (recommended for exploring the corpus)
 npm run query
 
-# Run transformer-based similarity analysis
-npm run similarity
-
-# Run TF-IDF analysis
-npm run tfidf
-
-# Build TF-IDF vector store
-npm run tfidf-vectors
+# Or run individual analyses
+npm run similarity           # Run transformer-based similarity analysis
 ```
 
 ## Test Corpus
