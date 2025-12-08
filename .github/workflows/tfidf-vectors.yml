@@ -1,5 +1,16 @@
 name: 013 PREPROC / TF-IDF Vector Store
 
+# ============================================================
+# Purpose: Build TF-IDF vector store from pre-computed TF-IDF data
+# Triggers: push to main/master (on tfidf-data/workflow changes), manual dispatch
+# Permissions: contents:read
+# Inputs: tfidf-data.zip from data-latest release
+# Outputs: tfidf-vector-index directory and tfidf_vectors.csv artifacts
+# Secrets: GITHUB_TOKEN (automatic)
+# Variables: None
+# Preconditions: tfidf workflow must have run to create tfidf-data.zip
+# ============================================================
+
 on:
   push:
     branches: [ main, master ]

@@ -1,5 +1,16 @@
 name: 011 PREPROC / Corpus Similarity Analysis
 
+# ============================================================
+# Purpose: Analyze similarity across corpus using pre-computed embeddings from vector index
+# Triggers: push to main/master (on corpus/workflow changes), pull requests, manual dispatch
+# Permissions: contents:read
+# Inputs: vector-index.zip from data-latest release
+# Outputs: similarity_results.csv artifact
+# Secrets: GITHUB_TOKEN (automatic)
+# Variables: None
+# Preconditions: embeddings-vectors workflow must have run to create vector-index.zip
+# ============================================================
+
 on:
   push:
     branches: [ main, master ]

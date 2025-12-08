@@ -1,5 +1,16 @@
 name: 010 PREPROC / embeddings-vectors
 
+# ============================================================
+# Purpose: Compute embeddings from corpus and create vector index for downstream workflows
+# Triggers: push to main/master (on corpus/workflow changes), manual dispatch
+# Permissions: contents:write
+# Inputs: Text files in test_corpus directory
+# Outputs: vector-index.zip in data-latest and versioned releases, embeddings.csv artifact
+# Secrets: GITHUB_TOKEN (automatic)
+# Variables: None
+# Preconditions: None
+# ============================================================
+
 on:
   push:
     branches: [ main, master ]
