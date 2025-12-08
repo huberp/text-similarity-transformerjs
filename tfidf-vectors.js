@@ -29,7 +29,6 @@ async function buildTFIDFVectorStore() {
   const documentIndexPath = join(TFIDF_DATA_DIR, 'document_index.csv');
   const termIndexPath = join(TFIDF_DATA_DIR, 'term_index.csv');
   const tfSparsePath = join(TFIDF_DATA_DIR, 'tf_sparse.csv');
-  const idfPath = join(TFIDF_DATA_DIR, 'idf.csv');
 
   // Read document index
   const documentIndexContent = readFileSync(documentIndexPath, 'utf-8');
@@ -53,16 +52,6 @@ async function buildTFIDFVectorStore() {
     };
   });
   console.log(`  Loaded ${terms.length} terms`);
-
-  // Read IDF weights into a map for quick lookup
-  const idfWeights = new Map();
-  const idfContent = readFileSync(idfPath, 'utf-8');
-  const idfLines = idfContent.trim().split('\n').slice(1); // Skip header
-  for (const line of idfLines) {
-    const [term, idfWeightStr] = line.split(',');
-    const idfWeight = parseFloat(idfWeightStr);
-    idfWeights.set(term, idfWeight);
-  }
 
   // Read TF sparse data
   const tfSparseContent = readFileSync(tfSparsePath, 'utf-8');
