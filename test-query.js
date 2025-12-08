@@ -7,6 +7,8 @@ import { LocalIndex } from 'vectra';
 
 const TFIDF_INDEX_PATH = './tfidf-vector-index';
 const TFIDF_DATA_PATH = './tfidf-data';
+const TOP_RESULTS = 5;
+const TOP_TERMS_DISPLAY = 5;
 
 async function testTFIDFQuery() {
   console.log('='.repeat(80));
@@ -44,16 +46,16 @@ async function testTFIDFQuery() {
       console.log('\nTop found terms with TF-IDF weights:');
       tfidfResult.foundTerms
         .sort((a, b) => b.tfidf - a.tfidf)
-        .slice(0, 5)
+        .slice(0, TOP_TERMS_DISPLAY)
         .forEach(t => {
           console.log(`  - ${t.term}: TF=${t.tf}, IDF=${t.idf.toFixed(4)}, TF-IDF=${t.tfidf.toFixed(4)}`);
         });
     }
     
     // Query for similar documents
-    const results = await index.queryItems(tfidfResult.vector, 5);
+    const results = await index.queryItems(tfidfResult.vector, TOP_RESULTS);
     
-    console.log('\nTop 5 similar documents:');
+    console.log(`\nTop ${TOP_RESULTS} similar documents:`);
     for (let i = 0; i < results.length; i++) {
       const { score, item } = results[i];
       const scorePercent = (score * 100).toFixed(2);

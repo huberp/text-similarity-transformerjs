@@ -9,6 +9,7 @@ const SIMILARITY_INDEX_PATH = './vector-index';
 const TFIDF_INDEX_PATH = './tfidf-vector-index';
 const TFIDF_DATA_PATH = './tfidf-data';
 const TOP_RESULTS = 10;
+const TOP_TERMS_DISPLAY = 10;
 
 /**
  * Query the similarity vector store with an embedding
@@ -92,7 +93,7 @@ async function queryTFIDFSimilarity(sentence) {
     console.log('\nFound terms with TF-IDF weights:');
     tfidfResult.foundTerms
       .sort((a, b) => b.tfidf - a.tfidf)
-      .slice(0, 10)
+      .slice(0, TOP_TERMS_DISPLAY)
       .forEach(t => {
         console.log(`  - ${t.term}: TF=${t.tf}, IDF=${t.idf.toFixed(4)}, TF-IDF=${t.tfidf.toFixed(4)}`);
       });
