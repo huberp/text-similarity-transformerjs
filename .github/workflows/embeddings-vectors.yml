@@ -54,8 +54,8 @@ jobs:
           **Generated**: ${{ steps.timestamp.outputs.timestamp }}
           **Commit**: ${{ github.sha }}
           
-          This release contains:
-          - `vector-index.zip` - Embeddings LocalIndex
+          This release contains intermediate data files.
+          See individual workflow runs for details on each asset.
         files: vector-index.zip
         draft: false
         prerelease: false

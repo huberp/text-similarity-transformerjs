@@ -41,13 +41,6 @@ jobs:
         cd ..
         ls -lh tfidf-data.zip
       
-    - name: Download existing release assets (if any)
-      continue-on-error: true
-      run: |
-        gh release download data-latest --pattern 'vector-index.zip' || echo "No existing vector-index.zip found"
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
     - name: Create/Update GitHub Release with TF-IDF data
       uses: softprops/action-gh-release@v2
       with:
@@ -59,12 +52,9 @@ jobs:
           **Last Updated**: ${{ github.event.head_commit.timestamp }}
           **Commit**: ${{ github.sha }}
           
-          This release contains:
-          - `vector-index.zip` - Embeddings LocalIndex (if available)
-          - `tfidf-data.zip` - TF-IDF analysis data
-        files: |
-          tfidf-data.zip
-          vector-index.zip
+          This release contains intermediate data files.
+          See individual workflow runs for details on each asset.
+        files: tfidf-data.zip
         draft: false
         prerelease: false
         make_latest: false
