@@ -1,4 +1,4 @@
-name: TF-IDF Vector Store
+name: 013 PREPROC / TF-IDF Vector Store
 
 on:
   push:
