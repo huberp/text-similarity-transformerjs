@@ -34,26 +34,42 @@ jobs:
     - name: Run TF-IDF analysis
       run: npm run tfidf
       
-    - name: Check for changes in tfidf-data
-      id: check-changes
+    - name: Zip tfidf-data directory
       run: |
-        git add tfidf-data/
-        if git diff --cached --quiet; then
-          echo "has_changes=false" >> $GITHUB_OUTPUT
-          echo "No changes in tfidf-data"
-        else
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-          echo "Changes detected in tfidf-data"
-        fi
+        cd tfidf-data
+        zip -r ../tfidf-data.zip .
+        cd ..
+        ls -lh tfidf-data.zip
       
-    - name: Commit and push TF-IDF data
-      if: steps.check-changes.outputs.has_changes == 'true'
+    - name: Download existing release assets (if any)
+      continue-on-error: true
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add tfidf-data/
-        git commit -m "Update TF-IDF data after corpus changes"
-        git push
+        gh release download data-latest --pattern 'vector-index.zip' || echo "No existing vector-index.zip found"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Create/Update GitHub Release with TF-IDF data
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: data-latest
+        name: "Intermediate Data (Latest)"
+        body: |
+          Automatically generated intermediate data for workflows.
+          
+          **Last Updated**: ${{ github.event.head_commit.timestamp }}
+          **Commit**: ${{ github.sha }}
+          
+          This release contains:
+          - `vector-index.zip` - Embeddings LocalIndex (if available)
+          - `tfidf-data.zip` - TF-IDF analysis data
+        files: |
+          tfidf-data.zip
+          vector-index.zip
+        draft: false
+        prerelease: false
+        make_latest: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Upload TF-IDF analysis outputs
       uses: actions/upload-artifact@v5

@@ -24,6 +24,36 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
       
+    - name: Download tfidf-data from release
+      run: |
+        echo "Downloading tfidf-data.zip from data-latest release..."
+        if ! gh release download data-latest --pattern 'tfidf-data.zip'; then
+          echo "=========================================="
+          echo "ERROR: tfidf-data.zip not found!"
+          echo "=========================================="
+          echo ""
+          echo "The tfidf-data.zip file is not available in the data-latest release."
+          echo "Please run the 'TF-IDF Analysis' workflow first to generate the TF-IDF data."
+          echo ""
+          echo "To generate the TF-IDF data:"
+          echo "  1. Go to Actions → 'TF-IDF Analysis'"
+          echo "  2. Click 'Run workflow'"
+          echo "  3. Wait for it to complete"
+          echo "  4. Re-run this workflow"
+          echo ""
+          exit 1
+        fi
+        echo "Successfully downloaded tfidf-data.zip"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Unzip tfidf-data
+      run: |
+        mkdir -p tfidf-data
+        unzip -o tfidf-data.zip -d tfidf-data/
+        ls -lh tfidf-data/
+        echo "Successfully extracted tfidf-data"
+      
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:

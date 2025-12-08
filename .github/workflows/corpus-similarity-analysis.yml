@@ -22,78 +22,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-index:
+  similarity-analysis:
     runs-on: ubuntu-latest
     
     permissions:
       contents: read
-      actions: write
-    
-    outputs:
-      index_exists: ${{ steps.check.outputs.index_exists }}
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
       
-    - name: Check if LocalIndex exists
-      id: check
+    - name: Download vector-index from release
       run: |
-        if [ -d "vector-index" ] && [ -f "vector-index/index.json" ]; then
-          echo "index_exists=true" >> $GITHUB_OUTPUT
-          echo "LocalIndex found"
-        else
-          echo "index_exists=false" >> $GITHUB_OUTPUT
-          echo "LocalIndex not found"
+        echo "Downloading vector-index.zip from data-latest release..."
+        if ! gh release download data-latest --pattern 'vector-index.zip'; then
+          echo "=========================================="
+          echo "ERROR: vector-index.zip not found!"
+          echo "=========================================="
+          echo ""
+          echo "The vector-index.zip file is not available in the data-latest release."
+          echo "Please run the 'embeddings-vectors' workflow first to generate the embeddings."
+          echo ""
+          echo "To generate the embeddings:"
+          echo "  1. Go to Actions → '010 PREPROC / embeddings-vectors'"
+          echo "  2. Click 'Run workflow'"
+          echo "  3. Wait for it to complete"
+          echo "  4. Re-run this workflow"
+          echo ""
+          exit 1
         fi
-  
-  trigger-embeddings:
-    needs: check-index
-    runs-on: ubuntu-latest
-    if: needs.check-index.outputs.index_exists == 'false'
-    
-    permissions:
-      actions: write
-    
-    steps:
-    - name: Trigger embeddings workflow
-      uses: actions/github-script@v8
-      with:
-        script: |
-          console.log('LocalIndex does not exist, triggering embeddings workflow...');
-          await github.rest.actions.createWorkflowDispatch({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'embeddings-vectors.yml',
-            ref: context.ref
-          });
-          console.log('Embeddings workflow triggered successfully');
-          
-    - name: Wait for embeddings workflow
+        echo "Successfully downloaded vector-index.zip"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Unzip vector-index
       run: |
-        echo "=========================================="
-        echo "LocalIndex does not exist!"
-        echo "=========================================="
-        echo ""
-        echo "The embeddings workflow has been triggered automatically."
-        echo "This workflow will fail now, but you can:"
-        echo "  1. Wait for the embeddings workflow to complete and commit the LocalIndex"
-        echo "  2. Re-run this workflow after the LocalIndex is available"
-        echo ""
-        echo "Alternatively, run 'npm run embeddings' locally to generate the LocalIndex."
-        exit 1
-
-  similarity-analysis:
-    needs: check-index
-    runs-on: ubuntu-latest
-    if: needs.check-index.outputs.index_exists == 'true'
-    
-    permissions:
-      contents: read
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
+        mkdir -p vector-index
+        unzip -o vector-index.zip -d vector-index/
+        ls -lh vector-index/
+        if [ ! -f "vector-index/index.json" ]; then
+          echo "ERROR: index.json not found in vector-index directory"
+          exit 1
+        fi
+        echo "Successfully extracted vector-index"
       
     - name: Setup Node.js
       uses: actions/setup-node@v6

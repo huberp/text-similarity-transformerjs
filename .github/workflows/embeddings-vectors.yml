@@ -32,26 +32,56 @@ jobs:
     - name: Compute embeddings and create LocalIndex
       run: npm run embeddings
       
-    - name: Check for changes in vector-index
-      id: check-changes
-      run: |
-        git add vector-index/
-        if git diff --cached --quiet; then
-          echo "has_changes=false" >> $GITHUB_OUTPUT
-          echo "No changes in vector-index"
-        else
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-          echo "Changes detected in vector-index"
-        fi
+    - name: Create timestamp for release tag
+      id: timestamp
+      run: echo "timestamp=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
       
-    - name: Commit and push LocalIndex
-      if: steps.check-changes.outputs.has_changes == 'true'
+    - name: Zip vector-index directory
       run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add vector-index/
-        git commit -m "Update embeddings LocalIndex after corpus changes"
-        git push
+        cd vector-index
+        zip -r ../vector-index.zip .
+        cd ..
+        ls -lh vector-index.zip
+      
+    - name: Create/Update GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: data-latest
+        name: "Intermediate Data (Latest)"
+        body: |
+          Automatically generated intermediate data for workflows.
+          
+          **Generated**: ${{ steps.timestamp.outputs.timestamp }}
+          **Commit**: ${{ github.sha }}
+          
+          This release contains:
+          - `vector-index.zip` - Embeddings LocalIndex
+        files: vector-index.zip
+        draft: false
+        prerelease: false
+        make_latest: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Create versioned release tag
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: data-v${{ steps.timestamp.outputs.timestamp }}
+        name: "Intermediate Data ${{ steps.timestamp.outputs.timestamp }}"
+        body: |
+          Versioned snapshot of intermediate data.
+          
+          **Generated**: ${{ steps.timestamp.outputs.timestamp }}
+          **Commit**: ${{ github.sha }}
+          
+          This release contains:
+          - `vector-index.zip` - Embeddings LocalIndex
+        files: vector-index.zip
+        draft: false
+        prerelease: false
+        make_latest: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Upload embeddings CSV
       uses: actions/upload-artifact@v5

@@ -37,3 +37,9 @@ models/
 # Vector indices
 /vector-index/
 /tfidf-vector-index/
+
+# TF-IDF data directory
+/tfidf-data/
+
+# Zip archives
+*.zip
