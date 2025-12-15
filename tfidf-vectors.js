@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { LocalIndex } from 'vectra';
+import { escapeCSV } from './lib/csv-utils.js';
 
 // Constants
 const TFIDF_DATA_DIR = './tfidf-data';
@@ -8,16 +9,6 @@ const TFIDF_INDEX_DIR = './tfidf-vector-index';
 const OUTPUT_CSV = 'tfidf_vectors.csv';
 
 async function buildTFIDFVectorStore() {
-  // Helper function to escape CSV fields
-  const escapeCSV = (field) => {
-    if (field == null) return '';
-    const str = String(field);
-    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
-
   console.log('='.repeat(80));
   console.log('TF-IDF VECTOR STORE BUILDER');
   console.log('='.repeat(80));
