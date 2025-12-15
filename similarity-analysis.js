@@ -1,18 +1,9 @@
-import { readFileSync, readdirSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync, existsSync } from 'fs';
 import { LocalIndex } from 'vectra';
+import { readCorpusDocuments } from './lib/corpus-loader.js';
+import { escapeCSV } from './lib/csv-utils.js';
 
 async function analyzeSimilarity() {
-  // Helper function to escape CSV fields
-  const escapeCSV = (field) => {
-    if (field == null) return '';
-    const str = String(field);
-    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
-  
   console.log('Checking for pre-computed embeddings...');
   
   // Check if LocalIndex exists
@@ -38,32 +29,9 @@ async function analyzeSimilarity() {
   
   // Read all markdown files from test_corpus directory
   const corpusDir = './test_corpus';
-  const files = readdirSync(corpusDir)
-    .filter(file => file.endsWith('.md'))
-    .sort();
+  const documents = readCorpusDocuments(corpusDir);
   
-  console.log(`Found ${files.length} documents in test corpus\n`);
-  
-  // Read file contents and extract topic information
-  const documents = [];
-  for (const file of files) {
-    const filePath = join(corpusDir, file);
-    const content = readFileSync(filePath, 'utf-8');
-    
-    // Extract topic from markdown
-    const topicMatch = content.match(/\*\*Topic:\*\*\s*(.+)/);
-    const subtopicMatch = content.match(/\*\*Sub-Topic:\*\*\s*(.+)/);
-    
-    const topic = topicMatch ? topicMatch[1].trim() : 'Unknown';
-    const subtopic = subtopicMatch ? subtopicMatch[1].trim() : 'Unknown';
-    
-    documents.push({
-      filename: file,
-      content,
-      topic,
-      subtopic
-    });
-  }
+  console.log(`Found ${documents.length} documents in test corpus\n`);
   
   // List all items in the index to get vectors
   const allItems = await index.listItems();

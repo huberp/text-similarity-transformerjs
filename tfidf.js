@@ -1,54 +1,15 @@
 import { Corpus } from 'tiny-tfidf';
-import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import natural from 'natural';
+import { stemText } from './lib/stemming.js';
+import { readCorpusDocuments } from './lib/corpus-loader.js';
+import { escapeCSV } from './lib/csv-utils.js';
 
 // Constants for CSV formatting
 const IDF_DECIMAL_PLACES = 6;
 const OUTPUT_DIR = './tfidf-data';
 
-// Function to preprocess text with stemming
-function stemText(text) {
-  // Use the same tokenization pattern as tiny-tfidf's Document class
-  const matches = text.match(/[a-zA-ZÀ-ÖØ-öø-ÿ0-9]+/g);
-  if (!matches) return '';
-  
-  const stemmedWords = matches
-    .map(word => word.toLowerCase())
-    .filter(word => {
-      // Apply same filtering as tiny-tfidf Document class
-      if (word.length < 2 && !['i', 'a'].includes(word)) {
-        return false;
-      }
-      if (word.match(/^\d+$/)) {
-        return false;
-      }
-      return true;
-    })
-    .map(word => {
-      try {
-        return natural.PorterStemmer.stem(word);
-      } catch (error) {
-        // If stemming fails for any reason, return the original word
-        console.warn(`Warning: Failed to stem word "${word}":`, error.message);
-        return word;
-      }
-    });
-  
-  // Join stemmed words back into a string
-  return stemmedWords.join(' ');
-}
-
 function computeTFIDF() {
-  // Helper function to escape CSV fields
-  const escapeCSV = (field) => {
-    if (field == null) return '';
-    const str = String(field);
-    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
   
   console.log('='.repeat(80));
   console.log('TF-IDF ANALYSIS');
@@ -61,38 +22,18 @@ function computeTFIDF() {
   
   // Read all markdown files from test_corpus directory
   const corpusDir = './test_corpus';
-  const files = readdirSync(corpusDir)
-    .filter(file => file.endsWith('.md'))
-    .sort();
+  const documents = readCorpusDocuments(corpusDir);
   
-  console.log(`Found ${files.length} documents in test corpus\n`);
+  console.log(`Found ${documents.length} documents in test corpus\n`);
   
-  // Read file contents and extract topic information
-  const documents = [];
+  // Prepare arrays for tiny-tfidf
   const documentNames = [];
   const documentTexts = [];
   
-  for (const file of files) {
-    const filePath = join(corpusDir, file);
-    const content = readFileSync(filePath, 'utf-8');
-    
-    // Extract topic from markdown
-    const topicMatch = content.match(/\*\*Topic:\*\*\s*(.+)/);
-    const subtopicMatch = content.match(/\*\*Sub-Topic:\*\*\s*(.+)/);
-    
-    const topic = topicMatch ? topicMatch[1].trim() : 'Unknown';
-    const subtopic = subtopicMatch ? subtopicMatch[1].trim() : 'Unknown';
-    
-    documents.push({
-      filename: file,
-      content,
-      topic,
-      subtopic
-    });
-    
-    documentNames.push(file);
+  for (const doc of documents) {
+    documentNames.push(doc.filename);
     // Apply stemming to document text before adding to corpus
-    documentTexts.push(stemText(content));
+    documentTexts.push(stemText(doc.content));
   }
   
   console.log('Computing TF-IDF scores for all documents...');
