@@ -1,4 +1,5 @@
 import { pipeline } from '@xenova/transformers';
+import './lib/transformersEnv.js'; // Configure persistent caching
 import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { LocalIndex } from 'vectra';
