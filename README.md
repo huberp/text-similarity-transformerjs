@@ -57,6 +57,7 @@ TRANSFORMERS_CACHE_DIR=~/.cache/transformers npm run embeddings
 - **First run**: Downloads the model from HuggingFace (~300MB for bge-base-en-v1.5 with 8-bit quantization)
 - **Subsequent runs**: Reuses the cached model (no download needed)
 - **In-memory caching**: The pipeline is also cached in memory for the lifetime of the Node process
+- **GitHub Actions**: Workflows use GitHub Actions cache to persist models between runs, significantly speeding up CI
 
 ### Clearing the Cache
 
