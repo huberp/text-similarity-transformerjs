@@ -26,6 +26,13 @@ Transformer-based embedding utilities.
 - `getEmbeddingModel()` - Get or create cached embedding model pipeline
 - `computeEmbedding(text)` - Compute embedding vector for input text
 
+### `embeddings-export.js`
+
+Embedding export utilities.
+
+**Functions:**
+- `exportEmbeddingsToCSV(documents, vectors, filepath)` - Export embeddings to CSV file with metadata
+
 ### `stemming.js`
 
 Text preprocessing and stemming utilities.
@@ -40,6 +47,18 @@ TF-IDF vector creation utilities.
 **Functions:**
 - `createTFIDFVector(text, tfidfDataDir)` - Create normalized TF-IDF vector for input text
   - Returns: `{ vector, foundTerms, stemmedText, totalTerms }`
+
+### `transformersEnv.js`
+
+Transformers.js environment configuration for persistent caching.
+
+### `vector-index.js`
+
+Vector index management utilities using Vectra LocalIndex.
+
+**Functions:**
+- `createOrOpenIndex(indexPath)` - Create or open a LocalIndex at the specified path
+- `insertDocumentEmbeddings(index, documents, vectors)` - Insert document embeddings into the index with metadata
 
 ## Usage Examples
 
@@ -79,3 +98,28 @@ import { stemText } from './lib/stemming.js';
 const stemmed = stemText("calculating derivatives and integrals");
 console.log(stemmed); // "calcul deriv and integr"
 ```
+
+### Exporting embeddings to CSV
+
+```javascript
+import { exportEmbeddingsToCSV } from './lib/embeddings-export.js';
+
+const documents = [
+  { filename: 'doc1.md', topic: 'Math', subtopic: 'Calculus' },
+  { filename: 'doc2.md', topic: 'Math', subtopic: 'Algebra' }
+];
+const vectors = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]];
+exportEmbeddingsToCSV(documents, vectors, 'output.csv');
+```
+
+### Working with vector index
+
+```javascript
+import { createOrOpenIndex, insertDocumentEmbeddings } from './lib/vector-index.js';
+
+const index = await createOrOpenIndex('./my-index');
+const documents = [{ filename: 'doc1.md', topic: 'Math', subtopic: 'Algebra' }];
+const vectors = [[0.1, 0.2, 0.3]];
+await insertDocumentEmbeddings(index, documents, vectors);
+```
+
