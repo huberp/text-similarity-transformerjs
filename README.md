@@ -36,6 +36,44 @@ npm run query
 npm run similarity           # Run transformer-based similarity analysis
 ```
 
+## Model Caching
+
+The transformer models are **automatically cached** to disk to avoid re-downloading on each run.
+
+### Cache Location
+
+By default, models are cached in `./.cache/transformers` (project-local directory). You can customize the cache location using the `TRANSFORMERS_CACHE_DIR` environment variable:
+
+```bash
+# Use a custom cache directory
+TRANSFORMERS_CACHE_DIR=/path/to/cache npm run embeddings
+
+# Use a shared cache across multiple projects
+TRANSFORMERS_CACHE_DIR=~/.cache/transformers npm run embeddings
+```
+
+### How It Works
+
+- **First run**: Downloads the model from HuggingFace (~300MB for bge-base-en-v1.5 with 8-bit quantization)
+- **Subsequent runs**: Reuses the cached model (no download needed)
+- **In-memory caching**: The pipeline is also cached in memory for the lifetime of the Node process
+
+### Clearing the Cache
+
+To force re-download of models (e.g., to get model updates):
+
+```bash
+# Remove the cache directory
+rm -rf ./.cache/transformers
+
+# Or remove a custom cache location
+rm -rf /path/to/your/cache
+```
+
+### Offline Usage
+
+After the initial download, you can run the tools offline as long as the cache directory is intact.
+
 ## Test Corpus
 
 The repository includes 25 sample documents (max 400 words each) organized into three topics:
