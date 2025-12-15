@@ -1,9 +1,9 @@
 name: 000 CI
 
 # ============================================================
-# Purpose: Run security checks, linting, and conditional similarity analysis on push/PR
+# Purpose: Run dependency review, linting, and conditional similarity analysis on push/PR
 # Triggers: push to main/master, pull requests, manual dispatch
-# Permissions: contents:read, pull-requests:write (security-check job)
+# Permissions: contents:read, pull-requests:write (dependency-review job)
 # Inputs: None
 # Outputs: Similarity analysis artifacts (embeddings.csv, similarity_results.csv) when triggered
 # Secrets: GITHUB_TOKEN (automatic)
@@ -19,292 +19,68 @@ on:
   workflow_dispatch:
 
 jobs:
-  security-check:
+  dependency-review:
     runs-on: ubuntu-latest
-    # Run on all pull requests to check for package changes
+    # Run on all pull requests to check for dependency changes
     if: github.event_name == 'pull_request'
-    
+
     permissions:
       contents: read
       pull-requests: write
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-        
-    - name: Checkout base branch
-      run: |
-        git fetch origin ${{ github.event.pull_request.base.ref }}
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '20'
-        
-    - name: Check if package files changed
-      id: check-package-changes
-      run: |
-        # Check if package.json or package-lock.json were modified in this PR
-        git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD > changed-files.txt
-        
-        if grep -E 'package\.json|package-lock\.json' changed-files.txt; then
-          echo "has_package_changes=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_package_changes=false" >> $GITHUB_OUTPUT
-        fi
-        
-    - name: Get changed dependencies
-      id: changed-deps
-      if: steps.check-package-changes.outputs.has_package_changes == 'true'
-      run: |
-        # Get the base package.json
-        if git show origin/${{ github.event.pull_request.base.ref }}:package.json > base-package.json 2>/dev/null; then
-          echo "Base package.json retrieved successfully"
-        else
-          echo "Warning: Could not retrieve base package.json, treating as if no dependencies existed"
-          echo '{"dependencies": {}, "devDependencies": {}}' > base-package.json
-        fi
-        
-        # Get current package.json
-        cp package.json current-package.json
-        
-        # Extract and compare dependencies
-        node -e '
-        const fs = require("fs");
-        const basePkg = JSON.parse(fs.readFileSync("base-package.json", "utf8"));
-        const currentPkg = JSON.parse(fs.readFileSync("current-package.json", "utf8"));
-        
-        const baseDeps = { ...(basePkg.dependencies || {}), ...(basePkg.devDependencies || {}) };
-        const currentDeps = { ...(currentPkg.dependencies || {}), ...(currentPkg.devDependencies || {}) };
-        
-        const changes = [];
-        
-        // Check for new or updated dependencies
-        for (const [name, version] of Object.entries(currentDeps)) {
-          const baseVersion = baseDeps[name];
-          if (!baseVersion || baseVersion !== version) {
-            // Determine ecosystem (for npm it is always npm)
-            const ecosystem = "npm";
-            // Remove version specifiers like ^, ~, >=, etc. to get clean version
-            // Handle complex version ranges by extracting the first valid semver
-            const cleanVersion = version.replace(/^[\^~>=<]+/, '').split(/[\s||]+/)[0];
-            changes.push({ name, version: cleanVersion, ecosystem });
-          }
-        }
-        
-        if (changes.length > 0) {
-          console.log("Changed dependencies found:");
-          console.log(JSON.stringify(changes, null, 2));
-          fs.writeFileSync("changed-deps.json", JSON.stringify(changes, null, 2));
-          console.log("HAS_CHANGES=true");
-        } else {
-          console.log("No dependency changes detected");
-          console.log("HAS_CHANGES=false");
-        }
-        ' | tee dependency-check.log
-        
-        # Set output based on whether we have changes
-        if [ -f changed-deps.json ]; then
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_changes=false" >> $GITHUB_OUTPUT
-        fi
-        
-    - name: Check dependencies against GitHub Advisory Database
-      if: steps.check-package-changes.outputs.has_package_changes == 'true' && steps.changed-deps.outputs.has_changes == 'true'
-      id: advisory-check
-      run: |
-        # Install the GitHub Advisory Database checker if available
-        # For now, we'll use npm audit which checks against the same database
-        
-        echo "Running security audit on new/updated dependencies..."
-        npm install --package-lock-only
-        
-        # Run npm audit and capture results and exit code
-        set +e
-        npm audit --json > audit-results.json
-        AUDIT_EXIT_CODE=$?
-        set -e
-        
-        # Check if audit ran successfully (exit codes 0 or 1 are expected)
-        # 0 = no vulnerabilities, 1 = vulnerabilities found
-        if [ $AUDIT_EXIT_CODE -gt 1 ]; then
-          echo "⚠️ npm audit encountered an error (exit code: $AUDIT_EXIT_CODE)"
-          echo '{"error": "npm audit failed", "exit_code": '$AUDIT_EXIT_CODE'}' > audit-results.json
-        fi
-        
-        # Parse and display results
-        node -e '
-        const fs = require("fs");
-        const auditResults = JSON.parse(fs.readFileSync("audit-results.json", "utf8"));
-        const changedDeps = JSON.parse(fs.readFileSync("changed-deps.json", "utf8"));
-        
-        const changedDepNames = new Set(changedDeps.map(d => d.name));
-        
-        console.log("=".repeat(80));
-        console.log("SECURITY ADVISORY CHECK RESULTS");
-        console.log("=".repeat(80));
-        console.log();
-        
-        // Check for npm audit errors
-        if (auditResults.error) {
-          console.log(`❌ npm audit failed: ${auditResults.error}`);
-          console.log(`   Exit code: ${auditResults.exit_code || "unknown"}`);
-          console.log();
-        }
-        
-        let hasRelevantVulns = false;
-        
-        // Check vulnerabilities field
-        if (auditResults.vulnerabilities) {
-          const vulns = auditResults.vulnerabilities;
-          
-          for (const [pkgName, vulnInfo] of Object.entries(vulns)) {
-            // Check if this vulnerability affects a changed dependency
-            if (changedDepNames.has(pkgName)) {
-              hasRelevantVulns = true;
-              console.log(`⚠️  ${pkgName}:`);
-              if (vulnInfo.via && Array.isArray(vulnInfo.via)) {
-                vulnInfo.via.forEach(v => {
-                  if (typeof v === "object") {
-                    console.log(`   - ${v.title || "Vulnerability"}`);
-                    console.log(`     Severity: ${v.severity || "unknown"}`);
-                    if (v.url) console.log(`     URL: ${v.url}`);
-                  }
-                });
-              }
-              console.log();
-            }
-          }
-        }
-        
-        // Also check metadata for summary
-        if (auditResults.metadata && auditResults.metadata.vulnerabilities) {
-          const meta = auditResults.metadata.vulnerabilities;
-          if (meta.total > 0) {
-            console.log(`ℹ️  Total vulnerabilities in dependency tree: ${meta.total}`);
-            console.log(`   Critical: ${meta.critical || 0}`);
-            console.log(`   High: ${meta.high || 0}`);
-            console.log(`   Moderate: ${meta.moderate || 0}`);
-            console.log(`   Low: ${meta.low || 0}`);
-            console.log();
-          }
-        }
-        
-        if (!hasRelevantVulns && !auditResults.error) {
-          console.log("✅ No vulnerabilities found in changed dependencies");
-          console.log();
-        }
-        
-        console.log("Changed dependencies:");
-        changedDeps.forEach(dep => {
-          console.log(`  - ${dep.name}@${dep.version}`);
-        });
-        '
-        
-    - name: Comment on PR with security results
-      if: steps.check-package-changes.outputs.has_package_changes == 'true' && steps.changed-deps.outputs.has_changes == 'true'
-      uses: actions/github-script@v8
-      with:
-        script: |
-          const fs = require('fs');
-          
-          let comment = '## 🔒 Dependency Security Check\n\n';
-          
-          // Read changed dependencies
-          const changedDeps = JSON.parse(fs.readFileSync('changed-deps.json', 'utf8'));
-          
-          comment += '### Changed Dependencies\n\n';
-          changedDeps.forEach(dep => {
-            comment += `- \`${dep.name}@${dep.version}\`\n`;
-          });
-          comment += '\n';
-          
-          // Read audit results
-          const auditResults = JSON.parse(fs.readFileSync('audit-results.json', 'utf8'));
-          
-          // Check for audit errors
-          if (auditResults.error) {
-            comment += '### ❌ Security Audit Error\n\n';
-            comment += `The security audit failed: ${auditResults.error}\n\n`;
-            comment += 'Please check the workflow logs for more details.\n';
-          } else if (auditResults.metadata && auditResults.metadata.vulnerabilities) {
-            const meta = auditResults.metadata.vulnerabilities;
-            const total = meta.total || 0;
-            
-            if (total > 0) {
-              comment += '### ⚠️ Security Audit Results\n\n';
-              comment += `Found ${total} vulnerabilities in the dependency tree:\n\n`;
-              comment += `- Critical: ${meta.critical || 0}\n`;
-              comment += `- High: ${meta.high || 0}\n`;
-              comment += `- Moderate: ${meta.moderate || 0}\n`;
-              comment += `- Low: ${meta.low || 0}\n\n`;
-              comment += 'Please review the audit results and assess the risk.\n';
-            } else {
-              comment += '### ✅ No vulnerabilities detected\n\n';
-              comment += 'All dependencies passed security checks.\n';
-            }
-          } else {
-            comment += '### ✅ No vulnerabilities detected\n\n';
-            comment += 'All dependencies passed security checks.\n';
-          }
-          
-          // Post comment
-          await github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
+
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
 
   lint:
-    needs: [security-check]
+    needs: [dependency-review]
     runs-on: ubuntu-latest
-    # Run after security-check completes (or is skipped)
+    # Run after dependency-review completes (or is skipped)
     if: always()
-    
+
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '20'
-        
+
     - name: Install dependencies
       run: npm install
-      
+
     - name: Run linter
       run: npm run lint
 
   check-similarity-trigger:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     permissions:
       contents: read
-    
+
     outputs:
       should_run: ${{ steps.check-files.outputs.should_run }}
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        
+
     - name: Check if similarity-related files changed
       id: check-files
       run: |
         # Check if similarity.js or text-similarity workflow was modified
         git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD > changed-files.txt
-        
+
         if grep -E 'similarity\.js|\.github/workflows/text-similarity\.yml' changed-files.txt; then
           echo "should_run=true" >> $GITHUB_OUTPUT
           echo "Similarity-related files were modified, will trigger analysis"
@@ -317,25 +93,25 @@ jobs:
     needs: check-similarity-trigger
     runs-on: ubuntu-latest
     if: needs.check-similarity-trigger.outputs.should_run == 'true'
-    
+
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '20'
-        
+
     - name: Install dependencies
       run: npm install
-      
+
     - name: Run text similarity analysis
       run: npm run similarity
-      
+
     - name: Upload similarity analysis outputs
       uses: actions/upload-artifact@v6
       if: always()
