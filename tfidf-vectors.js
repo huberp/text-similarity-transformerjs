@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { LocalIndex } from 'vectra';
 import { escapeCSV } from './lib/csv-utils.js';
+import { createOrOpenIndex, insertVectors } from './lib/vector-index.js';
 
 // Constants
 const TFIDF_DATA_DIR = './tfidf-data';
@@ -107,29 +107,16 @@ async function buildTFIDFVectorStore() {
   // Create output directory if it doesn't exist
   mkdirSync(TFIDF_INDEX_DIR, { recursive: true });
   
-  // Initialize Vectra LocalIndex
-  const index = new LocalIndex(TFIDF_INDEX_DIR);
+  // Initialize Vectra LocalIndex (uses shared helper)
+  const index = await createOrOpenIndex(TFIDF_INDEX_DIR);
   
-  // Check if index exists, if not create it
-  if (!(await index.isIndexCreated())) {
-    await index.createIndex();
-  }
-  
-  // Insert normalized vectors with metadata
-  for (let i = 0; i < documents.length; i++) {
-    const doc = documents[i];
-    const vector = normalizedVectors[i];
-    
-    await index.insertItem({
-      vector,
-      metadata: {
-        id: doc.id,
-        filename: doc.filename,
-        topic: doc.topic,
-        subtopic: doc.subtopic
-      }
-    });
-  }
+  // Insert normalized vectors with metadata (uses shared helper)
+  await insertVectors(index, documents, normalizedVectors, (doc) => ({
+    id: doc.id,
+    filename: doc.filename,
+    topic: doc.topic,
+    subtopic: doc.subtopic
+  }));
   
   console.log(`  LocalIndex created at: ${TFIDF_INDEX_DIR}`);
   console.log(`  Stored ${documents.length} normalized TF-IDF vectors\n`);
