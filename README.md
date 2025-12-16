@@ -188,7 +188,7 @@ This separation is useful when embeddings are expensive to compute and you want 
 
 ## Output Files
 
-All scripts generate CSV files for further analysis in Jupyter, Pandas, Excel, or other tools. See [OUTPUT_EXAMPLES.md](OUTPUT_EXAMPLES.md) for detailed usage examples.
+All scripts generate CSV files for further analysis in Jupyter, Pandas, Excel, or other tools.
 
 ### Transformer Analysis Outputs
 
